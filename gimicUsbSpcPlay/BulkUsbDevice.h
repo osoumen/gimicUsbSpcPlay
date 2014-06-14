@@ -16,6 +16,7 @@ public:
     BulkUsbDevice();
     ~BulkUsbDevice();
     
+    bool IsInitialized() { return mDevHandle?true:false; }
     // USBデバイスを開く
     int OpenDevice(int vid, int pid, int wpipe, int rpipe);
     // USBデバイスを解放する

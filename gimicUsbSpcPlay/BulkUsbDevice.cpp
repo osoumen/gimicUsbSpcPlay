@@ -42,10 +42,13 @@ int BulkUsbDevice::OpenDevice(int vid, int pid, int wpipe, int rpipe)
     mProductID = pid;
     // VendorIDとProductIDを指定してデバイスを開く
     mDevHandle = libusb_open_device_with_vid_pid(mCtx, vid, pid);
-    if(mDevHandle == NULL)
+    if(mDevHandle == NULL) {
 		cout<<"Cannot open device"<<endl;
-	else
+        return 1;
+    }
+	else {
 		cout<<"Device Opened"<<endl;
+    }
     
     // カーネルドライバが有効な場合、無効にして制御を取得する
     if (libusb_kernel_driver_active(mDevHandle, 0) == 1) {

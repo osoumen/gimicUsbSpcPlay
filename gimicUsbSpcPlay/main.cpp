@@ -25,7 +25,9 @@ void PrintHexData(const unsigned char *data, int bytes)
 int main()
 {
     SpcControlDevice    *device = new SpcControlDevice();
-    device->Init();
+    if (device->Init() != 0) {
+        exit(1);
+    }
     
     // 書き込みと読み込みのテスト
     usleep(1000);

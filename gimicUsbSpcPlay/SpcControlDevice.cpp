@@ -23,6 +23,9 @@ int SpcControlDevice::Init()
 {
     int r = 0;
     r = mUsbDev->OpenDevice(GIMIC_USBVID, GIMIC_USBPID, GIMIC_USBWPIPE, GIMIC_USBRPIPE);
+    if (mUsbDev->IsInitialized() == false) {
+        return 1;
+    }
     HwReset();
     return r;
 }
