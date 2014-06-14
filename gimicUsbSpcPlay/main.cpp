@@ -30,7 +30,9 @@ int main()
     }
     
     // 書き込みと読み込みのテスト
-    usleep(1000);
+    while (device->PortRead(0) != 0xaa || device->PortRead(1) != 0xbb) {
+        usleep(100);
+    }
     
     cout << setw(2) << setfill('0') << hex << uppercase << (int)device->PortRead(0) << endl;
     device->PortWrite(0, 0xcc);
