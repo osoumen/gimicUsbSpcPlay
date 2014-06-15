@@ -2,9 +2,6 @@
 #include <iomanip>
 #include "SpcControlDevice.h"
 
-#define GIMIC_USBVID 0x16c0
-#define GIMIC_USBPID 0x05e5
-
 using namespace std;
 
 void PrintHexData(const unsigned char *data, int bytes)
