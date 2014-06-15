@@ -6,6 +6,8 @@
 //  Copyright (c) 2014年 osoumen. All rights reserved.
 //
 
+#include <iostream>
+#include "unistd.h"
 #include "SpcControlDevice.h"
 
 
@@ -26,7 +28,6 @@ int SpcControlDevice::Init()
     if (mUsbDev->IsInitialized() == false) {
         return 1;
     }
-    HwReset();
     return r;
 }
 
@@ -70,4 +71,140 @@ unsigned char SpcControlDevice::PortRead(int addr)
     int rb = 64;
     mUsbDev->ReadBytes(mReadBuf, &rb, 10);  // 10msでタイムアウト
     return mReadBuf[0];
+}
+
+void SpcControlDevice::WaitReady()
+{
+    if (mUsbDev->IsInitialized()) {
+        while (PortRead(0) != 0xaa || PortRead(1) != 0xbb) {
+            usleep(2);
+        }
+    }
+}
+
+void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned char *zeroPageRam)
+{
+    uploadDSPRamLoadCode(0x0002);   // $0002 にコードを書き込む
+    // DSPロードプログラムのアドレスをP2,P3にセットして、P0に16+1を書き込む
+    PortWrite(2, 0x02);
+    PortWrite(3, 0x00);
+    PortWrite(1, 0x00); // 0なのでP2,P3はジャンプ先アドレス
+    PortWrite(0, 0x11); // 16バイト書き込んだので１つ飛ばして17
+    while (PortRead(0) != 0x11) {
+        usleep(2);
+    }
+    unsigned char port0state = 0;
+    for (int i=0; i<128; i++) {
+        PortWrite(1, dspReg[i]);
+        PortWrite(0, port0state);
+        if (i < 127) {
+            while (PortRead(0) != port0state) {
+                usleep(2);
+            }
+        }
+        port0state++;
+    }
+    // 正常に128バイト書き込まれたなら、プログラムはここで $ffc7 へジャンプされ、
+    // P0に $AA が書き込まれる
+    while (PortRead(0) != 0xaa) {
+        usleep(2);
+    }
+    // 次に、IPLを利用して、0ページに書き込む
+    port0state = 0;
+    PortWrite(2, 0x02);
+    PortWrite(3, 0x00);
+    PortWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
+    PortWrite(0, 0xcc); // 起動直後と同じ
+    while (PortRead(0) != 0xcc) {
+        usleep(2);
+    }
+    for (int i=2; i<0xf0; i++) {
+        PortWrite(1, zeroPageRam[i]);
+        PortWrite(0, port0state);
+        while (PortRead(0) != port0state) {
+            usleep(2);
+        }
+        port0state++;
+    }
+}
+
+void SpcControlDevice::UploadRAMData(unsigned char *ram, int addr, int size)
+{
+    PortWrite(2, addr & 0xff);
+    PortWrite(3, (addr >> 8) & 0xff);
+    PortWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
+    unsigned char port0State = PortRead(0);
+    port0State += 2;
+    PortWrite(0, port0State & 0xff);
+    while (PortRead(0) != (port0State&0xff)) {
+        usleep(2);
+    }
+    port0State = 0;
+    for (int i=0; i<size; i++) {
+        PortWrite(1, ram[i]);
+        PortWrite(0, port0State);
+        while (PortRead(0) != port0State) {
+            usleep(2);
+        }
+        port0State++;
+        if ((i % 64) == 63) {
+            std::cout << ".";
+        }
+    }
+}
+
+void SpcControlDevice::uploadDSPRamLoadCode(int addr)
+{
+    unsigned char dspram_write_code[16] =
+    {   //128バイトの DSPレジスタをロードするためのコード
+        /*
+         --
+         mov   $f2,a
+         -
+         cmp   a,$f4
+         bne   -
+         mov   $f3,$f5
+         mov   $f4,a
+         inc   a
+         bpl   --
+         bra   $b7 (->ffc7)
+         */
+        0xC4, 0xF2, 0x64, 0xF4, 0xD0, 0xFC, 0xFA, 0xF5, 0xF3, 0xC4, 0xF4, 0xBC, 0x10, 0xF2, 0x2F, 0xB7,
+    };
+    
+    PortWrite(3, (addr >> 8) & 0xff);
+    PortWrite(2, addr & 0xff);
+    PortWrite(1, 1);
+    PortWrite(0, 0xcc);
+    while (PortRead(0) != 0xcc) {
+        usleep(2);
+    }
+    for (int i=0; i<sizeof(dspram_write_code); i++) {
+        PortWrite(1, dspram_write_code[i]);
+        PortWrite(0, i & 0xff);
+        while (PortRead(0) != (i&0xff)) {
+            usleep(2);
+        }
+    }
+}
+
+void SpcControlDevice::JumpToBootloader(int addr,
+                                        unsigned char p0, unsigned char p1,
+                                        unsigned char p2, unsigned char p3)
+{
+    PortWrite(3, (addr >> 8) & 0xff);
+    PortWrite(2, addr & 0xff);
+    PortWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
+    unsigned char port0state = PortRead(0);
+    port0state += 2;
+    PortWrite(0, port0state);
+    // ブートローダーがP0に'S'を書き込むのを待つ
+    while (PortRead(0) != 'S') {
+        usleep(2);
+    }
+    // P0-P3を復元
+    PortWrite(0, p0);
+    PortWrite(1, p1);
+    PortWrite(2, p2);
+    PortWrite(3, p3);
 }

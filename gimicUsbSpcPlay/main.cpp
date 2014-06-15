@@ -1,6 +1,8 @@
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 #include "SpcControlDevice.h"
+#include "SPCFile.h"
 
 using namespace std;
 
@@ -19,25 +21,58 @@ void PrintHexData(const unsigned char *data, int bytes)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 2) {
+        cout << "usage:" << endl << "gimicUsbSpcPlay [spcfile]" << endl;
+        exit(1);
+    }
+    SPCFile     *spc = new SPCFile(argv[1], false);
+    spc->Load();
+    if (!spc->IsLoaded()) {
+        cout << "Invalid SPC File!" << endl;
+        exit(1);
+    }
+    spc->Fill0EchoRegion();
+    spc->FindAndLocateBootCode();
+    
     SpcControlDevice    *device = new SpcControlDevice();
     if (device->Init() != 0) {
         exit(1);
     }
     
-    // 書き込みと読み込みのテスト
-    while (device->PortRead(0) != 0xaa || device->PortRead(1) != 0xbb) {
-        usleep(100);
-    }
+    // 時間計測
+    const auto startTime = chrono::system_clock::now();
     
-    cout << setw(2) << setfill('0') << hex << uppercase << (int)device->PortRead(0) << endl;
-    device->PortWrite(0, 0xcc);
-    unsigned char readData;
-    while ((readData = device->PortRead(0)) != 0xcc) {
-        usleep(100);
-    }
-    cout << setw(2) << setfill('0') << hex << uppercase << (int)readData << endl;
+    // ハードウェアリセット
+    device->HwReset();
+    // ソフトウェアリセット
+    device->SwReset();
+    
+    // $BBAA 待ち
+    device->WaitReady();
+    
+    // 0ページとDSPレジスタを転送
+    device->UploadDSPRegAndZeroPage(spc->GetDspReg(), spc->GetRamData());
+    cout << "dspreg, zeropage OK." << endl;
+    
+    // 0ページ以降のRAMを転送
+    cout << "Writing RAM";
+    unsigned char *spcRam = spc->GetRamData();
+    device->UploadRAMData(spcRam+0x100, 0x100, 0x10000 - 0x100);
+    
+    // ブートローダーへジャンプ
+    device->JumpToBootloader(spc->GetBootPtr(),
+                             spcRam[0xf4], spcRam[0xf5],
+                             spcRam[0xf6], spcRam[0xf7]);
+    
+    cout << endl;
+    
+    const auto endTime = std::chrono::system_clock::now();
+    const auto timeSpan = endTime - startTime;
+    cout << "転送時間: "
+    << chrono::duration_cast<chrono::milliseconds>(timeSpan).count() / 1000.0
+    << "秒" << endl;
     
     // 解放処理
     device->Close();

@@ -23,6 +23,13 @@ public:
     void PortWrite(int addr, unsigned char data);
     unsigned char PortRead(int addr);
     
+    void UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned char *zeroPageRam);
+    void UploadRAMData(unsigned char *ram, int addr, int size);
+    void WaitReady();
+    void JumpToBootloader(int addr,
+                          unsigned char p0, unsigned char p1,
+                          unsigned char p2, unsigned char p3);
+
 private:
     static const int GIMIC_USBVID = 0x16c0;
     static const int GIMIC_USBPID = 0x05e5;
@@ -32,6 +39,8 @@ private:
     BulkUsbDevice   *mUsbDev;
     unsigned char   mWriteBuf[64];
     unsigned char   mReadBuf[64];
+    
+    void uploadDSPRamLoadCode(int addr);
 };
 
 #endif /* defined(__gimicUsbSpcPlay__SpcControlDevice__) */

@@ -85,10 +85,12 @@ int BulkUsbDevice::WriteBytes(unsigned char *data, int *bytes)
     int r = 0;
     int inBytes = *bytes;
     r = libusb_bulk_transfer(mDevHandle, (2 | LIBUSB_ENDPOINT_OUT), data, inBytes, bytes, 0);
+#ifdef _DEBUG
     if (r == 0 && *bytes == inBytes)
 		cout<<"Writing Successful!"<<endl;
 	else
 		cout<<"Write Error"<<endl;
+#endif
     return r;
 }
 
@@ -97,9 +99,11 @@ int BulkUsbDevice::ReadBytes(unsigned char *data, int *bytes, int timeOut)
     int r = 0;
     int reqBytes = *bytes;
     r = libusb_bulk_transfer(mDevHandle, (5 | LIBUSB_ENDPOINT_IN), data, reqBytes, bytes, timeOut);
+#ifdef _DEBUG
     if (r == 0 && *bytes == reqBytes)
 		cout<<"Reading Successful!"<<endl;
 	else
 		cout<<"Read Error"<<endl;
+#endif
     return r;
 }
