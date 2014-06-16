@@ -31,6 +31,8 @@ public:
     libusb_device_handle    *mDevHandle;
     int                     mVendorID;
     int                     mProductID;
+    int                     mWPipe;
+    int                     mRPipe;
 };
 
 #endif /* defined(__gimicUsbSpcPlay__BulkUsbDevice__) */

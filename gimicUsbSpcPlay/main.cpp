@@ -33,6 +33,8 @@ int main(int argc, char *argv[])
         cout << "Invalid SPC File!" << endl;
         exit(1);
     }
+    cout << "Loaded " << argv[1] << endl;
+    
     spc->Fill0EchoRegion();
     spc->FindAndLocateBootCode();
     
@@ -40,7 +42,6 @@ int main(int argc, char *argv[])
     if (device->Init() != 0) {
         exit(1);
     }
-    
     // 時間計測
     const auto startTime = chrono::system_clock::now();
     
@@ -57,7 +58,7 @@ int main(int argc, char *argv[])
     cout << "dspreg, zeropage OK." << endl;
     
     // 0ページ以降のRAMを転送
-    cout << "Writing RAM";
+    cout << "Writing to RAM";
     unsigned char *spcRam = spc->GetRamData();
     device->UploadRAMData(spcRam+0x100, 0x100, 0x10000 - 0x100);
     
@@ -66,7 +67,7 @@ int main(int argc, char *argv[])
                              spcRam[0xf4], spcRam[0xf5],
                              spcRam[0xf6], spcRam[0xf7]);
     
-    cout << endl;
+    cout << "finished." << endl;
     
     const auto endTime = std::chrono::system_clock::now();
     const auto timeSpan = endTime - startTime;

@@ -105,7 +105,7 @@ bool SPCFile::Load()
     // エコー設定を読み込む
     mEchoRegion = static_cast<int>(m_pDspReg[0x6d]) << 8;
     mEchoSize = (m_pDspReg[0x7d] & 0x0f) * 2048;
-    printf("echo_region=%04x\n", mEchoRegion);
+    printf("echo_region: $%04x\n", mEchoRegion);
     printf("echo_size=%04x\n", mEchoSize);
     if (mEchoSize == 0) {
         mEchoSize=4;
@@ -174,41 +174,40 @@ void SPCFile::FindAndLocateBootCode()
     unsigned char boot_code[] =
     {
         /*
-         Apuplayのソースより
-         
+         Apuplayより
          mov   $00,#$00
          mov   $01,#$01
          mov   $fc,#SPC_TIMER2
          mov   $fb,#SPC_TIMER1
          mov   $fa,#SPC_TIMER0
          mov   $f1,#SPC_CONTROL
-         mov   x,#$53
+         mov   x,#$53       ; 'S'をP0に書き込む
          mov   $f4,x
          -  mov   a,SPC_PORT0
-         cmp   a,#SPC_PORT0  //P0セット待ち
+         cmp   a,#SPC_PORT0  ;P0セット待ち
          bne   -
          -  mov   a,SPC_PORT1
-         cmp   a,#SPC_PORT0  //P1セット待ち
+         cmp   a,#SPC_PORT0  ;P1セット待ち
          bne   -
          -  mov   a,SPC_PORT2
-         cmp   a,#SPC_PORT2  //P3セット待ち
+         cmp   a,#SPC_PORT2  ;P3セット待ち
          bne   -
          -  mov   a,SPC_PORT3
-         cmp   a,#SPC_PORT3  //P3セット待ち
+         cmp   a,#SPC_PORT3  ;P3セット待ち
          bne   -
          mov   a,$fd
          mov   a,$fe
          mov   a,$ff
          mov   $f2,#$6c
-         mov   $f3,#$(DSP$6c)
+         mov   $f3,#${DSP$6c}
          mov   $f2,#$4c
-         mov   $f3,#$(DSP$4c)
-         mov   $f2,#($00f2)
-         mov   x,#(SP-3)
+         mov   $f3,#${DSP$4c}
+         mov   $f2,#{$00f2}
+         mov   x,#{SP-3}
          mov   sp,x
-         mov   a,#(A)
-         mov   y,#(Y)
-         mov   x,#(X)
+         mov   a,#{A}
+         mov   y,#{Y}
+         mov   x,#{X}
          reti
          */
         0x8F, 0x00, 0x00, 0x8F, 0x00, 0x01, 0x8F, 0xFF, 0xFC, 0x8F, 0xFF, 0xFB, 0x8F, 0x4F, 0xFA, 0x8F,
@@ -284,5 +283,5 @@ void SPCFile::FindAndLocateBootCode()
     m_pRamData[addr+0x49] = m_pFileData[HDR_Y];
     m_pRamData[addr+0x4B] = m_pFileData[HDR_X];
     
-    printf ("bootloader located %04x\n", mBootPtr);
+    printf ("bootloader located: $%04x\n", mBootPtr);
 }

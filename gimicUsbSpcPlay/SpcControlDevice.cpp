@@ -147,7 +147,7 @@ void SpcControlDevice::UploadRAMData(unsigned char *ram, int addr, int size)
             usleep(2);
         }
         port0State++;
-        if ((i % 64) == 63) {
+        if ((i % 256) == 255) {
             std::cout << ".";
         }
     }
