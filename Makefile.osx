@@ -1,10 +1,10 @@
 .SUFFIXES : .cpp .o
 
-CC = g++
-LD = g++
+CC = gcc
+LD = gcc
 INCDIR = gimicUsbSpcPlay
-CFLAGS = -I$(INCDIR) -O3
-LFLAGS = -lm -lusb-1.0
+CFLAGS = -I/usr/local/include/libusb-1.0 -I$(INCDIR) -O3
+LFLAGS = -lm -L/usr/local/lib -lstdc++ -lusb-1.0 -Wl,-framework,IOKit -Wl,-framework,Foundation
 PROGRAM  = gmcSpcPlay
 
 IFILES = gimicUsbSpcPlay/BulkUsbDevice.h \

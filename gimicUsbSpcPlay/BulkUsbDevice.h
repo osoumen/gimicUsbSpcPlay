@@ -9,7 +9,7 @@
 #ifndef __gimicUsbSpcPlay__BulkUsbDevice__
 #define __gimicUsbSpcPlay__BulkUsbDevice__
 
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 
 class BulkUsbDevice {
 public:
