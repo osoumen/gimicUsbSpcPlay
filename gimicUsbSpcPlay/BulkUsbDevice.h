@@ -23,9 +23,15 @@ public:
     int CloseDevice();
     // データを書き込む
     int WriteBytes(unsigned char *data, int *bytes);
+    int WriteBytesAsync(unsigned char *data, int *bytes);
     // データを読み出す
     int ReadBytes(unsigned char *data, int *bytes, int timeOut);
+    
+    void HandleEvents();
 
+private:
+    static const int WRITE_BUF_SIZE = 4096;
+    static const int WRITE_TRANSFER_NUM = 1024;
     
     libusb_context          *mCtx;
     libusb_device_handle    *mDevHandle;
@@ -33,6 +39,13 @@ public:
     int                     mProductID;
     int                     mWPipe;
     int                     mRPipe;
+    unsigned char           mWriteBuf[WRITE_BUF_SIZE];
+    int                     mWriteBufPtr;
+    struct libusb_transfer *m_pTransferOut[WRITE_TRANSFER_NUM];
+    int                     mTransferPtr;
+    int                     mNumTransfers;
+    
+    static void callbackOut(struct libusb_transfer *transfer);
 };
 
 #endif /* defined(__gimicUsbSpcPlay__BulkUsbDevice__) */

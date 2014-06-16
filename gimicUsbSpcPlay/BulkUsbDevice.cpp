@@ -13,7 +13,10 @@ using namespace std;
 
 BulkUsbDevice::BulkUsbDevice()
 : mCtx(NULL),
-  mDevHandle(NULL)
+  mDevHandle(NULL),
+  mWriteBufPtr(0),
+  mTransferPtr(0),
+  mNumTransfers(0)
 {
     // USBライブラリの初期化を行う
     int r;
@@ -72,6 +75,10 @@ int BulkUsbDevice::CloseDevice()
 {
     int r = 0;
     if (mDevHandle) {
+        while (mNumTransfers > 0) {
+            usleep(1000);
+            libusb_handle_events(mCtx);
+        }
         r = libusb_release_interface(mDevHandle, 0);
         if(r!=0) {
             cout<<"Cannot Release Interface"<<endl;
@@ -86,7 +93,7 @@ int BulkUsbDevice::WriteBytes(unsigned char *data, int *bytes)
 {
     int r = 0;
     int inBytes = *bytes;
-    r = libusb_bulk_transfer(mDevHandle, mWPipe, data, inBytes, bytes, 0);
+    r = libusb_bulk_transfer(mDevHandle, mWPipe, data, inBytes, bytes, 500);
 #ifdef _DEBUG
     if (r == 0 && *bytes == inBytes)
 		cout<<"Writing Successful!"<<endl;
@@ -94,6 +101,60 @@ int BulkUsbDevice::WriteBytes(unsigned char *data, int *bytes)
 		cout<<"Write Error"<<endl;
 #endif
     return r;
+}
+
+int BulkUsbDevice::WriteBytesAsync(unsigned char *data, int *bytes)
+{
+    int r = 0;
+    int inBytes = *bytes;
+    // データをリングバッファにコピーする
+    if ((WRITE_BUF_SIZE - mWriteBufPtr) < inBytes) {
+        mWriteBufPtr = 0;
+    }
+    memcpy(&mWriteBuf[mWriteBufPtr], data, inBytes);
+    
+    m_pTransferOut[mTransferPtr] = libusb_alloc_transfer(0);
+    libusb_fill_bulk_transfer(m_pTransferOut[mTransferPtr],
+                              mDevHandle,
+                              mWPipe,
+                              &mWriteBuf[mWriteBufPtr],
+                              inBytes,
+                              callbackOut,
+                              reinterpret_cast<void *>(this),
+                              0);
+    while (mNumTransfers == WRITE_TRANSFER_NUM) {
+        usleep(2);
+        libusb_handle_events(mCtx);
+    }
+    mNumTransfers++;
+    r = libusb_submit_transfer(m_pTransferOut[mTransferPtr]);
+    mWriteBufPtr += inBytes;
+#ifdef _DEBUG
+    if (r == 0 && *bytes == inBytes)
+		cout<<"Writing Successful!"<<endl;
+	else
+		cout<<"Write Error"<<endl;
+#endif
+    return r;
+}
+
+void BulkUsbDevice::HandleEvents()
+{
+    libusb_handle_events(mCtx);
+}
+
+void BulkUsbDevice::callbackOut(struct libusb_transfer *transfer)
+{
+    BulkUsbDevice *This = reinterpret_cast<BulkUsbDevice *>(transfer->user_data);
+    if (transfer->status == LIBUSB_TRANSFER_COMPLETED ||
+        transfer->status == LIBUSB_TRANSFER_STALL) {
+        libusb_free_transfer(transfer);
+        This->mNumTransfers--;
+    }
+    else {
+        usleep(100);
+        libusb_submit_transfer(transfer);
+    }
 }
 
 int BulkUsbDevice::ReadBytes(unsigned char *data, int *bytes, int timeOut)

@@ -10,6 +10,7 @@
 #include "unistd.h"
 #include "SpcControlDevice.h"
 
+#define NO_VERIFY
 
 SpcControlDevice::SpcControlDevice()
 {
@@ -58,7 +59,7 @@ void SpcControlDevice::PortWrite(int addr, unsigned char data)
     cmd[0] = addr & 0x03;
     cmd[1] = data;
     int wb = sizeof(cmd);
-    mUsbDev->WriteBytes(cmd, &wb);
+    mUsbDev->WriteBytesAsync(cmd, &wb);
 }
 
 unsigned char SpcControlDevice::PortRead(int addr)
@@ -69,7 +70,7 @@ unsigned char SpcControlDevice::PortRead(int addr)
     mUsbDev->WriteBytes(cmd, &wb);
     
     int rb = 64;
-    mUsbDev->ReadBytes(mReadBuf, &rb, 10);  // 10msでタイムアウト
+    mUsbDev->ReadBytes(mReadBuf, &rb, 500);  // 500msでタイムアウト
     return mReadBuf[0];
 }
 
@@ -143,9 +144,17 @@ void SpcControlDevice::UploadRAMData(unsigned char *ram, int addr, int size)
     for (int i=0; i<size; i++) {
         PortWrite(1, ram[i]);
         PortWrite(0, port0State);
+#ifdef NO_VERIFY
+        // P0の確認を取らずに次々に送信する
+        // 4倍程度速くなったが、データの正確性が保証されなくなる
+        usleep(80);
+        mUsbDev->HandleEvents();
+#else
+        // 1バイトずつP0を確認しながら送信する本来の方法
         while (PortRead(0) != port0State) {
             usleep(2);
         }
+#endif
         port0State++;
         if ((i % 256) == 255) {
             std::cout << ".";
