@@ -1,6 +1,6 @@
 #include <iostream>
 #include <iomanip>
-#include <chrono>
+#include <sys/time.h>
 #include "SpcControlDevice.h"
 #include "SPCFile.h"
 
@@ -43,7 +43,8 @@ int main(int argc, char *argv[])
         exit(1);
     }
     // 時間計測
-    const auto startTime = chrono::system_clock::now();
+    timeval startTime;
+    gettimeofday(&startTime, NULL );
     
     // ハードウェアリセット
     device->HwReset();
@@ -69,10 +70,10 @@ int main(int argc, char *argv[])
     
     cout << "finished." << endl;
     
-    const auto endTime = std::chrono::system_clock::now();
-    const auto timeSpan = endTime - startTime;
+    timeval endTime;
+    gettimeofday(&endTime, NULL );
     cout << "転送時間: "
-    << chrono::duration_cast<chrono::milliseconds>(timeSpan).count() / 1000.0
+    << (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_usec - startTime.tv_usec) * 1.0e-6
     << "秒" << endl;
     
     // 解放処理
