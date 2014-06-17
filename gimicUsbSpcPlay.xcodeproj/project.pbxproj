@@ -13,6 +13,7 @@
 		F57BAFC7194C6A6900E9D728 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC6194C6A6900E9D728 /* IOKit.framework */; };
 		F57BAFC9194C6AA400E9D728 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC8194C6AA400E9D728 /* libusb-1.0.a */; };
 		F57BAFD2194C6D4F00E9D728 /* BulkUsbDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */; };
+		F57BAFD5194C759700E9D728 /* SpcControlDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +38,8 @@
 		F57BAFC8194C6AA400E9D728 /* libusb-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libusb-1.0.a"; path = "../../../../../usr/local/lib/libusb-1.0.a"; sourceTree = "<group>"; };
 		F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BulkUsbDevice.cpp; sourceTree = "<group>"; };
 		F57BAFD1194C6D4F00E9D728 /* BulkUsbDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BulkUsbDevice.h; sourceTree = "<group>"; };
+		F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SpcControlDevice.cpp; sourceTree = "<group>"; };
+		F57BAFD4194C759700E9D728 /* SpcControlDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpcControlDevice.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,8 +80,10 @@
 			children = (
 				F57BAFBB194C69E800E9D728 /* gimicUsbSpcPlay.1 */,
 				F57BAFB9194C69E800E9D728 /* main.cpp */,
-				F57BAFD1194C6D4F00E9D728 /* BulkUsbDevice.h */,
 				F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */,
+				F57BAFD1194C6D4F00E9D728 /* BulkUsbDevice.h */,
+				F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */,
+				F57BAFD4194C759700E9D728 /* SpcControlDevice.h */,
 			);
 			path = gimicUsbSpcPlay;
 			sourceTree = "<group>";
@@ -136,6 +141,7 @@
 			files = (
 				F57BAFD2194C6D4F00E9D728 /* BulkUsbDevice.cpp in Sources */,
 				F57BAFBA194C69E800E9D728 /* main.cpp in Sources */,
+				F57BAFD5194C759700E9D728 /* SpcControlDevice.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -257,6 +263,7 @@
 				F57BAFC1194C69E800E9D728 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

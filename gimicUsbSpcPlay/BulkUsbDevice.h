@@ -9,7 +9,6 @@
 #ifndef __gimicUsbSpcPlay__BulkUsbDevice__
 #define __gimicUsbSpcPlay__BulkUsbDevice__
 
-#include <iostream>
 #include <libusb.h>
 
 class BulkUsbDevice {
