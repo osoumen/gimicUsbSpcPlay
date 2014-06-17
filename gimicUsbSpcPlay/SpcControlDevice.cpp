@@ -10,7 +10,7 @@
 #include "unistd.h"
 #include "SpcControlDevice.h"
 
-#define NO_VERIFY
+//#define NO_VERIFY
 
 SpcControlDevice::SpcControlDevice()
 {
@@ -147,7 +147,7 @@ void SpcControlDevice::UploadRAMData(unsigned char *ram, int addr, int size)
 #ifdef NO_VERIFY
         // P0の確認を取らずに次々に送信する
         // 4倍程度速くなったが、データの正確性が保証されなくなる
-        usleep(80);
+        usleep(40);
         mUsbDev->HandleEvents();
 #else
         // 1バイトずつP0を確認しながら送信する本来の方法
