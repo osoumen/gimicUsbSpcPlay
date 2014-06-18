@@ -98,7 +98,7 @@ bool SPCFile::Load()
 	*/
     
     //Extra RAM領域が有効ならram内に移動する
-    if ( m_pRamData[0xf1] < 0 ) {
+    if ( m_pRamData[0xf1] & 0x80 ) {
         moveExRamToRam();
     }
     
