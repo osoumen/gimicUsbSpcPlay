@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sys/time.h>
+#include <stdlib.h>
 #include "SpcControlDevice.h"
 #include "SPCFile.h"
 

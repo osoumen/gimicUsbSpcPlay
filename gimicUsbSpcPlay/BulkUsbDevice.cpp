@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <string.h>
 #include "BulkUsbDevice.h"
 
 using namespace std;
@@ -25,12 +26,12 @@ BulkUsbDevice::BulkUsbDevice()
 		cout<<"Init Error "<<r<<endl;
 	}
     // デバッグレベルを3に設定する
-	libusb_set_debug(mCtx, 3);
+	::libusb_set_debug(mCtx, 3);
 }
 
 BulkUsbDevice::~BulkUsbDevice()
 {
-    libusb_exit(mCtx);
+    ::libusb_exit(mCtx);
 }
 
 int BulkUsbDevice::OpenDevice(int vid, int pid, int wpipe, int rpipe)
@@ -56,9 +57,9 @@ int BulkUsbDevice::OpenDevice(int vid, int pid, int wpipe, int rpipe)
     }
     
     // カーネルドライバが有効な場合、無効にして制御を取得する
-    if (libusb_kernel_driver_active(mDevHandle, 0) == 1) {
+    if (::libusb_kernel_driver_active(mDevHandle, 0) == 1) {
 		cout<<"Kernel Driver Active"<<endl;
-		if (libusb_detach_kernel_driver(mDevHandle, 0) == 0) {
+		if (::libusb_detach_kernel_driver(mDevHandle, 0) == 0) {
 			cout<<"Kernel Driver Detached!"<<endl;
         }
 	}
@@ -77,15 +78,15 @@ int BulkUsbDevice::CloseDevice()
     if (mDevHandle) {
         while (mNumTransfers > 0) {
             usleep(1000);
-            libusb_handle_events(mCtx);
+            ::libusb_handle_events(mCtx);
         }
-        r = libusb_release_interface(mDevHandle, 0);
+        r = ::libusb_release_interface(mDevHandle, 0);
         if(r!=0) {
             cout<<"Cannot Release Interface"<<endl;
             return 1;
         }
     }
-    libusb_close(mDevHandle);
+    ::libusb_close(mDevHandle);
     return 0;
 }
 
@@ -93,7 +94,7 @@ int BulkUsbDevice::WriteBytes(unsigned char *data, int *bytes)
 {
     int r = 0;
     int inBytes = *bytes;
-    r = libusb_bulk_transfer(mDevHandle, mWPipe, data, inBytes, bytes, 500);
+    r = ::libusb_bulk_transfer(mDevHandle, mWPipe, data, inBytes, bytes, 500);
 #ifdef _DEBUG
     if (r == 0 && *bytes == inBytes)
 		cout<<"Writing Successful!"<<endl;
@@ -114,7 +115,7 @@ int BulkUsbDevice::WriteBytesAsync(unsigned char *data, int *bytes)
     memcpy(&mWriteBuf[mWriteBufPtr], data, inBytes);
     
     m_pTransferOut[mTransferPtr] = libusb_alloc_transfer(0);
-    libusb_fill_bulk_transfer(m_pTransferOut[mTransferPtr],
+    ::libusb_fill_bulk_transfer(m_pTransferOut[mTransferPtr],
                               mDevHandle,
                               mWPipe,
                               &mWriteBuf[mWriteBufPtr],
@@ -124,10 +125,10 @@ int BulkUsbDevice::WriteBytesAsync(unsigned char *data, int *bytes)
                               0);
     while (mNumTransfers == WRITE_TRANSFER_NUM) {
         usleep(2);
-        libusb_handle_events(mCtx);
+        ::libusb_handle_events(mCtx);
     }
     mNumTransfers++;
-    r = libusb_submit_transfer(m_pTransferOut[mTransferPtr]);
+    r = ::libusb_submit_transfer(m_pTransferOut[mTransferPtr]);
     mWriteBufPtr += inBytes;
 #ifdef _DEBUG
     if (r == 0 && *bytes == inBytes)
@@ -140,7 +141,7 @@ int BulkUsbDevice::WriteBytesAsync(unsigned char *data, int *bytes)
 
 void BulkUsbDevice::HandleEvents()
 {
-    libusb_handle_events(mCtx);
+    ::libusb_handle_events(mCtx);
 }
 
 void BulkUsbDevice::callbackOut(struct libusb_transfer *transfer)
@@ -148,12 +149,12 @@ void BulkUsbDevice::callbackOut(struct libusb_transfer *transfer)
     BulkUsbDevice *This = reinterpret_cast<BulkUsbDevice *>(transfer->user_data);
     if (transfer->status == LIBUSB_TRANSFER_COMPLETED ||
         transfer->status == LIBUSB_TRANSFER_STALL) {
-        libusb_free_transfer(transfer);
+        ::libusb_free_transfer(transfer);
         This->mNumTransfers--;
     }
     else {
         usleep(100);
-        libusb_submit_transfer(transfer);
+        ::libusb_submit_transfer(transfer);
     }
 }
 
@@ -161,7 +162,7 @@ int BulkUsbDevice::ReadBytes(unsigned char *data, int *bytes, int timeOut)
 {
     int r = 0;
     int reqBytes = *bytes;
-    r = libusb_bulk_transfer(mDevHandle, mRPipe, data, reqBytes, bytes, timeOut);
+    r = ::libusb_bulk_transfer(mDevHandle, mRPipe, data, reqBytes, bytes, timeOut);
 #ifdef _DEBUG
     if (r == 0 && *bytes == reqBytes)
 		cout<<"Reading Successful!"<<endl;

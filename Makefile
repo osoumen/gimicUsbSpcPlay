@@ -1,10 +1,11 @@
 .SUFFIXES : .cpp .o
 
-CC = g++
-LD = g++
+CC = gcc
+LD = gcc
 INCDIR = gimicUsbSpcPlay
 CFLAGS = -I$(INCDIR) -O3
-LFLAGS = -lm -lusb-1.0
+LFLAGS = -lm
+LIBS =  -lstdc++ -lusb-1.0
 PROGRAM  = gmcSpcPlay
 
 IFILES = gimicUsbSpcPlay/BulkUsbDevice.h \
@@ -23,7 +24,7 @@ OFILES = $(CFILES:.cpp=.o)
 all: $(PROGRAM)
 
 $(PROGRAM):		$(OFILES)
-				$(LD) $(LFLAGS) $? -o $(PROGRAM)
+				$(LD) $(LFLAGS) $? -o $(PROGRAM) $(LIBS)
 
 $(OFILES):	$(CFILES) $(IFILES) Makefile
 
