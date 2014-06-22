@@ -45,7 +45,7 @@ private:
     int                     mTransferPtr;
     int                     mNumTransfers;
     
-    static void callbackOut(struct libusb_transfer *transfer);
+    static void LIBUSB_CALL callbackOut(struct libusb_transfer *transfer);
 };
 
 #endif /* defined(__gimicUsbSpcPlay__BulkUsbDevice__) */
