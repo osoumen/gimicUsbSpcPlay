@@ -11,6 +11,7 @@
 #include "SpcControlDevice.h"
 
 //#define NO_VERIFY
+//#define USE_BUSYWAIT
 
 SpcControlDevice::SpcControlDevice()
 {
@@ -74,6 +75,17 @@ unsigned char SpcControlDevice::PortRead(int addr)
     return mReadBuf[0];
 }
 
+void SpcControlDevice::BusyWait(uint8_t slotNum, uint16_t regAddr, uint8_t compValue, uint8_t timeout)
+{
+    unsigned char cmd[] = {0xfd, 0xb1, 0x00, 0x00, 0x00, 0x00, 0x00};
+    cmd[2] = slotNum;
+    cmd[3] = regAddr & 0x03;
+    cmd[5] = compValue;
+    cmd[6] = timeout;
+    int wb = sizeof(cmd);
+    mUsbDev->WriteBytesAsync(cmd, &wb);
+}
+
 void SpcControlDevice::WaitReady()
 {
     if (mUsbDev->IsInitialized()) {
@@ -98,11 +110,15 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
     for (int i=0; i<128; i++) {
         PortWrite(1, dspReg[i]);
         PortWrite(0, port0state);
+#ifdef USE_BUSYWAIT
+        BusyWait(0, 0, port0state, 100);
+#else
         if (i < 127) {
             while (PortRead(0) != port0state) {
                 usleep(2);
             }
         }
+#endif
         port0state++;
     }
     // 正常に128バイト書き込まれたなら、プログラムはここで $ffc7 へジャンプされ、
@@ -122,9 +138,13 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
     for (int i=2; i<0xf0; i++) {
         PortWrite(1, zeroPageRam[i]);
         PortWrite(0, port0state);
+#ifdef USE_BUSYWAIT
+        BusyWait(0, 0, port0state, 100);
+#else
         while (PortRead(0) != port0state) {
             usleep(2);
         }
+#endif
         port0state++;
     }
 }

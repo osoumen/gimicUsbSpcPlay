@@ -22,6 +22,7 @@ public:
     void SwReset();
     void PortWrite(int addr, unsigned char data);
     unsigned char PortRead(int addr);
+    void BusyWait(uint8_t slotNum, uint16_t regAddr, uint8_t compValue, uint8_t timeout);
     
     void UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned char *zeroPageRam);
     void UploadRAMData(unsigned char *ram, int addr, int size);
