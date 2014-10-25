@@ -95,7 +95,7 @@ int BulkUsbDevice::WriteBytes(unsigned char *data, int *bytes)
 {
     int r = 0;
     int inBytes = *bytes;
-    r = ::libusb_bulk_transfer(mDevHandle, mWPipe, data, inBytes, bytes, 500);
+    r = ::libusb_bulk_transfer(mDevHandle, mWPipe, data, inBytes, bytes, 20000);
 #ifdef _DEBUG
     if (r == 0 && *bytes == inBytes)
 		cout<<"Writing Successful!"<<endl;
