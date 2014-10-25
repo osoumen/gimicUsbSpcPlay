@@ -15,10 +15,10 @@ using namespace std;
 
 BulkUsbDevice::BulkUsbDevice()
 : mCtx(NULL),
-  mDevHandle(NULL),
-  mWriteBufPtr(0),
-  mTransferPtr(0),
-  mNumTransfers(0)
+  mDevHandle(NULL)
+  //mWriteBufPtr(0),
+  //mTransferPtr(0),
+  //mNumTransfers(0)
 {
     // USBライブラリの初期化を行う
     int r;
@@ -77,10 +77,12 @@ int BulkUsbDevice::CloseDevice()
 {
     int r = 0;
     if (mDevHandle) {
+        /*
         while (mNumTransfers > 0) {
             usleep(1000);
             ::libusb_handle_events(mCtx);
         }
+         */
         r = ::libusb_release_interface(mDevHandle, 0);
         if(r!=0) {
             cout<<"Cannot Release Interface"<<endl;
@@ -104,7 +106,7 @@ int BulkUsbDevice::WriteBytes(unsigned char *data, int *bytes)
 #endif
     return r;
 }
-
+/*
 int BulkUsbDevice::WriteBytesAsync(unsigned char *data, int *bytes)
 {
     int r = 0;
@@ -158,7 +160,7 @@ void BulkUsbDevice::callbackOut(struct libusb_transfer *transfer)
         ::libusb_submit_transfer(transfer);
     }
 }
-
+*/
 int BulkUsbDevice::ReadBytes(unsigned char *data, int *bytes, int timeOut)
 {
     int r = 0;

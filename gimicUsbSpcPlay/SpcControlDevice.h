@@ -20,8 +20,8 @@ public:
     int Close();
     void HwReset();
     void SwReset();
-    void PortWrite(int addr, unsigned char data);
-    unsigned char PortRead(int addr);
+    //void PortWrite(int addr, unsigned char data);
+    //unsigned char PortRead(int addr);
     void BlockWrite(int addr, unsigned char data);
     void ReadAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();

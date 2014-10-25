@@ -10,9 +10,6 @@
 #include "unistd.h"
 #include "SpcControlDevice.h"
 
-//#define NO_VERIFY
-//#define USE_BUSYWAIT
-
 SpcControlDevice::SpcControlDevice()
 {
     mUsbDev = new BulkUsbDevice();
@@ -54,7 +51,7 @@ void SpcControlDevice::SwReset()
     int wb = sizeof(cmd);
     mUsbDev->WriteBytes(cmd, &wb);
 }
-
+/*
 void SpcControlDevice::PortWrite(int addr, unsigned char data)
 {
     unsigned char cmd[] = {0x00, 0x00, 0xff};
@@ -75,7 +72,7 @@ unsigned char SpcControlDevice::PortRead(int addr)
     mUsbDev->ReadBytes(mReadBuf, &rb, 500);  // 500msでタイムアウト
     return mReadBuf[0];
 }
-
+*/
 void SpcControlDevice::BlockWrite(int addr, unsigned char data)
 {
     if (mWriteBytes > 60) {
@@ -161,13 +158,9 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
     for (int i=0; i<128; i++) {
         BlockWrite(1, dspReg[i]);
         BlockWrite(0, port0state);
-#ifdef USE_BUSYWAIT
-        BusyWait(0, 0, port0state, 100);
-#else
         if (i < 127) {
             ReadAndWait(0, port0state);
         }
-#endif
         port0state++;
     }
     // 正常に128バイト書き込まれたなら、プログラムはここで $ffc7 へジャンプされ、
@@ -183,11 +176,7 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
     for (int i=2; i<0xf0; i++) {
         BlockWrite(1, zeroPageRam[i]);
         BlockWrite(0, port0state);
-#ifdef USE_BUSYWAIT
-        BusyWait(0, 0, port0state, 100);
-#else
         ReadAndWait(0, port0state);
-#endif
         port0state++;
     }
     WriteBuffer();
@@ -206,15 +195,8 @@ void SpcControlDevice::UploadRAMData(unsigned char *ram, int addr, int size)
     for (int i=0; i<size; i++) {
         BlockWrite(1, ram[i]);
         BlockWrite(0, port0State);
-#ifdef NO_VERIFY
-        // P0の確認を取らずに次々に送信する
-        // 4倍程度速くなったが、データの正確性が保証されなくなる
-        usleep(40);
-        mUsbDev->HandleEvents();
-#else
         // 1バイトずつP0を確認しながら送信する本来の方法
         ReadAndWait(0, port0State);
-#endif
         port0State++;
         if ((i % 256) == 255) {
             std::cout << ".";
