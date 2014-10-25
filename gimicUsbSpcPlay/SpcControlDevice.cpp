@@ -75,7 +75,7 @@ unsigned char SpcControlDevice::PortRead(int addr)
 */
 void SpcControlDevice::BlockWrite(int addr, unsigned char data)
 {
-    if (mWriteBytes > 60) {
+    if (mWriteBytes > 62) {
         // TODO: Assert
         return;
     }
@@ -84,7 +84,7 @@ void SpcControlDevice::BlockWrite(int addr, unsigned char data)
     mWriteBuf[mWriteBytes] = data;
     mWriteBytes++;
     
-    if (mWriteBytes > 60) {
+    if (mWriteBytes > 62) {
         // mWriteBufの先頭にコマンドを付けて書き込む
         WriteBuffer();
     }
@@ -92,7 +92,7 @@ void SpcControlDevice::BlockWrite(int addr, unsigned char data)
 
 void SpcControlDevice::ReadAndWait(int addr, unsigned char waitValue)
 {
-    if (mWriteBytes > 60) {
+    if (mWriteBytes > 62) {
         // TODO: Assert
         return;
     }
@@ -101,7 +101,7 @@ void SpcControlDevice::ReadAndWait(int addr, unsigned char waitValue)
     mWriteBuf[mWriteBytes] = waitValue;
     mWriteBytes++;
     
-    if (mWriteBytes > 60) {
+    if (mWriteBytes > 62) {
         // mWriteBufの先頭にコマンドを付けて書き込む
         WriteBuffer();
     }
@@ -109,19 +109,22 @@ void SpcControlDevice::ReadAndWait(int addr, unsigned char waitValue)
 
 void SpcControlDevice::WriteBuffer()
 {
+    /*
     if (mWriteBytes > 62) {
         // TODO: Assert
         return;
     }
-    
+    */
     if (mWriteBytes > 3) {
         mWriteBuf[0] = 0xfd;
         mWriteBuf[1] = 0xb2;
         mWriteBuf[2] = 0x00;
-        mWriteBuf[mWriteBytes] = 0xff;
-        mWriteBytes++;
-        mWriteBuf[mWriteBytes] = 0xff;
-        mWriteBytes++;
+        for (int i=0; i<2; i++) {
+            if (mWriteBytes < 64) {
+                mWriteBuf[mWriteBytes] = 0xff;
+                mWriteBytes++;
+            }
+        }
         /*
         puts("\n--Dump--");
         for (int i=3; i<64; i+=2) {
@@ -131,6 +134,7 @@ void SpcControlDevice::WriteBuffer()
             if (blockaddr == 0xFF && blockdata == 0xFF)break;
         }
          */
+        //printf("mWriteBytes:%d\n", mWriteBytes);
         mUsbDev->WriteBytes(mWriteBuf, &mWriteBytes);
         mWriteBytes = 3;
     }
