@@ -76,17 +76,6 @@ unsigned char SpcControlDevice::PortRead(int addr)
     return mReadBuf[0];
 }
 
-void SpcControlDevice::BusyWait(uint8_t slotNum, uint16_t regAddr, uint8_t compValue, uint8_t timeout)
-{
-    unsigned char cmd[] = {0xfd, 0xb1, 0x00, 0x00, 0x00, 0x00, 0x00};
-    cmd[2] = slotNum;
-    cmd[3] = regAddr & 0x03;
-    cmd[5] = compValue;
-    cmd[6] = timeout;
-    int wb = sizeof(cmd);
-    mUsbDev->WriteBytesAsync(cmd, &wb);
-}
-
 void SpcControlDevice::BlockWrite(int addr, unsigned char data)
 {
     if (mWriteBytes > 60) {
@@ -136,7 +125,15 @@ void SpcControlDevice::WriteBuffer()
         mWriteBytes++;
         mWriteBuf[mWriteBytes] = 0xff;
         mWriteBytes++;
-        
+        /*
+        puts("\n--Dump--");
+        for (int i=3; i<64; i+=2) {
+            int blockaddr = mWriteBuf[i];
+            int blockdata = mWriteBuf[i+1];
+            printf("Block : 0x%02X / 0x%02X\n", blockaddr, blockdata);
+            if (blockaddr == 0xFF && blockdata == 0xFF)break;
+        }
+         */
         mUsbDev->WriteBytes(mWriteBuf, &mWriteBytes);
         mWriteBytes = 3;
     }
@@ -145,9 +142,9 @@ void SpcControlDevice::WriteBuffer()
 void SpcControlDevice::WaitReady()
 {
     if (mUsbDev->IsInitialized()) {
-        while (PortRead(0) != 0xaa || PortRead(1) != 0xbb) {
-            usleep(2);
-        }
+        ReadAndWait(0, 0xaa);
+        ReadAndWait(1, 0xbb);
+        WriteBuffer();
     }
 }
 
@@ -160,7 +157,6 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
     BlockWrite(1, 0x00); // 0なのでP2,P3はジャンプ先アドレス
     BlockWrite(0, 0x11); // 16バイト書き込んだので１つ飛ばして17
     ReadAndWait(0, 0x11);
-    WriteBuffer();
     unsigned char port0state = 0;
     for (int i=0; i<128; i++) {
         BlockWrite(1, dspReg[i]);
@@ -174,7 +170,6 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
 #endif
         port0state++;
     }
-    WriteBuffer();
     // 正常に128バイト書き込まれたなら、プログラムはここで $ffc7 へジャンプされ、
     // P0に $AA が書き込まれる
     ReadAndWait(0, 0xaa);
@@ -203,12 +198,10 @@ void SpcControlDevice::UploadRAMData(unsigned char *ram, int addr, int size)
     BlockWrite(2, addr & 0xff);
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
-    WriteBuffer();
-    unsigned char port0State = PortRead(0);
+    unsigned char port0State = 0xed;//PortRead(0);
     port0State += 2;
     BlockWrite(0, port0State & 0xff);
     ReadAndWait(0, port0State&0xff);
-    WriteBuffer();
     port0State = 0;
     for (int i=0; i<size; i++) {
         BlockWrite(1, ram[i]);
@@ -269,8 +262,7 @@ void SpcControlDevice::JumpToBootloader(int addr,
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
-    WriteBuffer();
-    unsigned char port0state = PortRead(0);
+    unsigned char port0state = 0xff;//PortRead(0);
     port0state += 2;
     BlockWrite(0, port0state);
     // ブートローダーがP0に'S'を書き込むのを待つ

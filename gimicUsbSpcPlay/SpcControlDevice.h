@@ -22,7 +22,6 @@ public:
     void SwReset();
     void PortWrite(int addr, unsigned char data);
     unsigned char PortRead(int addr);
-    void BusyWait(uint8_t slotNum, uint16_t regAddr, uint8_t compValue, uint8_t timeout);
     void BlockWrite(int addr, unsigned char data);
     void ReadAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
