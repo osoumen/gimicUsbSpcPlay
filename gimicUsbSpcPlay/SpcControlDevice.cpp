@@ -119,7 +119,7 @@ void SpcControlDevice::WriteBuffer()
         mWriteBuf[0] = 0xfd;
         mWriteBuf[1] = 0xb2;
         mWriteBuf[2] = 0x00;
-        mWriteBuf[3] = 0x50;
+        mWriteBuf[3] = 0x00;
         for (int i=0; i<2; i++) {
             if (mWriteBytes < 64) {
                 mWriteBuf[mWriteBytes] = 0xff;
