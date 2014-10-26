@@ -27,7 +27,7 @@ int SpcControlDevice::Init()
     if (mUsbDev->IsInitialized() == false) {
         return 1;
     }
-    mWriteBytes = 3;    // 0xFD,0xB2,0xNN分
+    mWriteBytes = BLOCKWRITE_CMD_LEN;    // 0xFD,0xB2,0xNN分
     return r;
 }
 
@@ -51,11 +51,11 @@ void SpcControlDevice::SwReset()
     int wb = sizeof(cmd);
     mUsbDev->WriteBytes(cmd, &wb);
 }
-/*
+
 void SpcControlDevice::PortWrite(int addr, unsigned char data)
 {
     unsigned char cmd[] = {0x00, 0x00, 0xff};
-    cmd[0] = addr & 0x03;
+    cmd[0] = addr;
     cmd[1] = data;
     int wb = sizeof(cmd);
     mUsbDev->WriteBytes(cmd, &wb);
@@ -64,7 +64,7 @@ void SpcControlDevice::PortWrite(int addr, unsigned char data)
 unsigned char SpcControlDevice::PortRead(int addr)
 {
     unsigned char cmd[] = {0xfd, 0xb0, 0x00, 0x00, 0xff};
-    cmd[2] = addr & 0x03;
+    cmd[2] = addr;
     int wb = sizeof(cmd);
     mUsbDev->WriteBytes(cmd, &wb);
     
@@ -72,7 +72,7 @@ unsigned char SpcControlDevice::PortRead(int addr)
     mUsbDev->ReadBytes(mReadBuf, &rb, 500);  // 500msでタイムアウト
     return mReadBuf[0];
 }
-*/
+
 void SpcControlDevice::BlockWrite(int addr, unsigned char data)
 {
     if (mWriteBytes > 62) {
@@ -115,10 +115,11 @@ void SpcControlDevice::WriteBuffer()
         return;
     }
     */
-    if (mWriteBytes > 3) {
+    if (mWriteBytes > BLOCKWRITE_CMD_LEN) {
         mWriteBuf[0] = 0xfd;
         mWriteBuf[1] = 0xb2;
         mWriteBuf[2] = 0x00;
+        mWriteBuf[3] = 0x50;
         for (int i=0; i<2; i++) {
             if (mWriteBytes < 64) {
                 mWriteBuf[mWriteBytes] = 0xff;
@@ -136,7 +137,7 @@ void SpcControlDevice::WriteBuffer()
          */
         //printf("mWriteBytes:%d\n", mWriteBytes);
         mUsbDev->WriteBytes(mWriteBuf, &mWriteBytes);
-        mWriteBytes = 3;
+        mWriteBytes = BLOCKWRITE_CMD_LEN;
     }
 }
 

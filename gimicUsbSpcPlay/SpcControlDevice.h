@@ -20,8 +20,8 @@ public:
     int Close();
     void HwReset();
     void SwReset();
-    //void PortWrite(int addr, unsigned char data);
-    //unsigned char PortRead(int addr);
+    void PortWrite(int addr, unsigned char data);
+    unsigned char PortRead(int addr);
     void BlockWrite(int addr, unsigned char data);
     void ReadAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
@@ -37,6 +37,7 @@ private:
     static const int GIMIC_USBPID = 0x05e5;
     static const int GIMIC_USBWPIPE = 0x02;
     static const int GIMIC_USBRPIPE = 0x85;
+    static const int BLOCKWRITE_CMD_LEN = 4;
 
     BulkUsbDevice   *mUsbDev;
     unsigned char   mWriteBuf[64];
