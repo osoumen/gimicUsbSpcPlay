@@ -60,7 +60,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "gtme.spc"
+            argument = "sound_of_mnemon.spc"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

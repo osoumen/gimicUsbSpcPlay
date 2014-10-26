@@ -19,6 +19,8 @@ public:
 	unsigned char	*GetRamData() { return m_pRamData; }
     unsigned char	*GetDspReg() { return m_pDspReg; }
     unsigned char	*GetExram() { return m_pExram; }
+    unsigned char   *GetOriginalData() { return m_pOriinalData; }
+    int             GetSPCReadSize() { return SPC_READ_SIZE; }
     int             GetBootPtr() { return mBootPtr; }
 	unsigned char	*GetSampleIndex( int sampleIndex, int *size );
 	int				GetLoopSizeIndex( int samleIndex );	//負数でループ無し
@@ -26,6 +28,7 @@ public:
 	virtual bool	Load();
 	
     void Fill0EchoRegion();
+    void FindAndLocateDspAccCode();
     void FindAndLocateBootCode();
 
 private:
@@ -38,6 +41,7 @@ private:
     static const int HDR_PSW = 0x2a;
     static const int HDR_SP  = 0x2b;
 	
+    unsigned char	*m_pOriinalData;
 	unsigned char	*m_pFileData;
 	unsigned char	*m_pRamData;
     unsigned char   *m_pDspReg;
@@ -55,5 +59,5 @@ private:
     
 private:
     void moveExRamToRam();
-
+    int findFreeArea(int codeSize);
 };

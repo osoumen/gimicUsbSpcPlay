@@ -13,9 +13,63 @@
 #include <string.h>
 
 //-----------------------------------------------------------------------------
+unsigned char boot_code[] =
+{
+    /*
+     Apuplayより
+     mov   $00,#$00
+     mov   $01,#$01
+     mov   $fc,#SPC_TIMER2
+     mov   $fb,#SPC_TIMER1
+     mov   $fa,#SPC_TIMER0
+     mov   $f1,#SPC_CONTROL
+     mov   x,#$53       ; 'S'をP0に書き込む
+     mov   $f4,x
+     -  mov   a,SPC_PORT0
+     cmp   a,#SPC_PORT0  ;P0セット待ち
+     bne   -
+     -  mov   a,SPC_PORT1
+     cmp   a,#SPC_PORT0  ;P1セット待ち
+     bne   -
+     -  mov   a,SPC_PORT2
+     cmp   a,#SPC_PORT2  ;P3セット待ち
+     bne   -
+     -  mov   a,SPC_PORT3
+     cmp   a,#SPC_PORT3  ;P3セット待ち
+     bne   -
+     mov   a,$fd
+     mov   a,$fe
+     mov   a,$ff
+     mov   $f2,#$6c
+     mov   $f3,#${DSP$6c}
+     mov   $f2,#$4c
+     mov   $f3,#${DSP$4c}
+     mov   $f2,#{$00f2}
+     mov   x,#{SP-3}
+     mov   sp,x
+     mov   a,#{A}
+     mov   y,#{Y}
+     mov   x,#{X}
+     reti
+     */
+    0x8F, 0x00, 0x00, 0x8F, 0x00, 0x01, 0x8F, 0xFF, 0xFC, 0x8F, 0xFF, 0xFB, 0x8F, 0x4F, 0xFA, 0x8F,
+    0x31, 0xF1, 0xCD, 0x53, 0xD8, 0xF4, 0xE4, 0xF4, 0x68, 0x00, 0xD0, 0xFA, 0xE4, 0xF5, 0x68, 0x00,
+    0xD0, 0xFA, 0xE4, 0xF6, 0x68, 0x00, 0xD0, 0xFA, 0xE4, 0xF7, 0x68, 0x00, 0xD0, 0xFA, 0xE4, 0xFD,
+    0xE4, 0xFE, 0xE4, 0xFF, 0x8F, 0x6C, 0xF2, 0x8F, 0x00, 0xF3, 0x8F, 0x4C, 0xF2, 0x8F, 0x00, 0xF3,
+    0x8F, 0x7F, 0xF2, 0xCD, 0xF5, 0xBD, 0xE8, 0xFF, 0x8D, 0x00, 0xCD, 0x00, 0x7F,
+};
+
+//-----------------------------------------------------------------------------
+unsigned char dspregAccCode[] =
+{
+    0xE8, 0xFF, 0x64, 0xF4, 0xF0, 0x08, 0xFA, 0xF5, 0xF2, 0xFA, 0xF6, 0xF3, 0xC4, 0xF4, 0x2F, 0xF2
+};
+
+//-----------------------------------------------------------------------------
 SPCFile::SPCFile( const char *path, bool isWriteable )
 : FileAccess(path, isWriteable)
 {
+    m_pOriinalData = new unsigned char[SPC_READ_SIZE];
 	m_pFileData = new unsigned char[SPC_READ_SIZE];
 	m_pRamData = m_pFileData + 0x100;
     m_pDspReg  = m_pFileData + 0x100 + 0x10000;
@@ -29,6 +83,7 @@ SPCFile::SPCFile( const char *path, bool isWriteable )
 SPCFile::~SPCFile()
 {
 	delete [] m_pFileData;
+    delete [] m_pOriinalData;
 }
 
 //-----------------------------------------------------------------------------
@@ -71,6 +126,9 @@ bool SPCFile::Load()
     }
 #endif
 	
+    //オリジナルのデータをコピー
+    memccpy(m_pOriinalData, m_pFileData, 1, SPC_READ_SIZE);
+    
 	//ファイルチェック
 //	if ( strncmp((char*)m_pFileData, "SNES-SPC700 Sound File Data v0.30", 33) != 0 ) {
 	if ( strncmp((char*)m_pFileData, "SNES-SPC700 Sound File Data v", 29) != 0 ) {
@@ -168,55 +226,10 @@ void SPCFile::Fill0EchoRegion()
         }
     }
 }
+
 //-----------------------------------------------------------------------------
-void SPCFile::FindAndLocateBootCode()
+int SPCFile::findFreeArea(int codeSize)
 {
-    unsigned char boot_code[] =
-    {
-        /*
-         Apuplayより
-         mov   $00,#$00
-         mov   $01,#$01
-         mov   $fc,#SPC_TIMER2
-         mov   $fb,#SPC_TIMER1
-         mov   $fa,#SPC_TIMER0
-         mov   $f1,#SPC_CONTROL
-         mov   x,#$53       ; 'S'をP0に書き込む
-         mov   $f4,x
-         -  mov   a,SPC_PORT0
-         cmp   a,#SPC_PORT0  ;P0セット待ち
-         bne   -
-         -  mov   a,SPC_PORT1
-         cmp   a,#SPC_PORT0  ;P1セット待ち
-         bne   -
-         -  mov   a,SPC_PORT2
-         cmp   a,#SPC_PORT2  ;P3セット待ち
-         bne   -
-         -  mov   a,SPC_PORT3
-         cmp   a,#SPC_PORT3  ;P3セット待ち
-         bne   -
-         mov   a,$fd
-         mov   a,$fe
-         mov   a,$ff
-         mov   $f2,#$6c
-         mov   $f3,#${DSP$6c}
-         mov   $f2,#$4c
-         mov   $f3,#${DSP$4c}
-         mov   $f2,#{$00f2}
-         mov   x,#{SP-3}
-         mov   sp,x
-         mov   a,#{A}
-         mov   y,#{Y}
-         mov   x,#{X}
-         reti
-         */
-        0x8F, 0x00, 0x00, 0x8F, 0x00, 0x01, 0x8F, 0xFF, 0xFC, 0x8F, 0xFF, 0xFB, 0x8F, 0x4F, 0xFA, 0x8F,
-        0x31, 0xF1, 0xCD, 0x53, 0xD8, 0xF4, 0xE4, 0xF4, 0x68, 0x00, 0xD0, 0xFA, 0xE4, 0xF5, 0x68, 0x00,
-        0xD0, 0xFA, 0xE4, 0xF6, 0x68, 0x00, 0xD0, 0xFA, 0xE4, 0xF7, 0x68, 0x00, 0xD0, 0xFA, 0xE4, 0xFD,
-        0xE4, 0xFE, 0xE4, 0xFF, 0x8F, 0x6C, 0xF2, 0x8F, 0x00, 0xF3, 0x8F, 0x4C, 0xF2, 0x8F, 0x00, 0xF3,
-        0x8F, 0x7F, 0xF2, 0xCD, 0xF5, 0xBD, 0xE8, 0xFF, 0x8D, 0x00, 0xCD, 0x00, 0x7F,
-    };
-    // RAM終端から探し、エコー領域を除いて同じ値が77byte以上続く場所にブートローダーを仕込む
     int count = 0;
     int addr = 0;
     for (int i=255; i>=0; i--) {
@@ -229,7 +242,7 @@ void SPCFile::FindAndLocateBootCode()
                 else {
                     count = 0;
                 }
-                if (count == sizeof(boot_code)) {
+                if (count == codeSize) {
                     break;
                 }
             }
@@ -237,12 +250,22 @@ void SPCFile::FindAndLocateBootCode()
                 count=0;
             }
         }
-        if (count == sizeof(boot_code)) {
+        if (count == codeSize) {
             break;
         }
     }
+    return addr;
+}
+
+//-----------------------------------------------------------------------------
+void SPCFile::FindAndLocateDspAccCode()
+{
+    int codeSize = sizeof(dspregAccCode);
+    
+    // RAM終端から探し、エコー領域を除いて同じ値が16byte以上続く場所にブートローダーを仕込む
+    int addr = findFreeArea(codeSize);
     if (addr == 0xff) {
-        if (mEchoSize < sizeof(boot_code)) {
+        if (mEchoSize < codeSize) {
             printf("Not enough RAM for boot code.\n");
             return;
         }
@@ -250,10 +273,36 @@ void SPCFile::FindAndLocateBootCode()
             //見つからなければエコー領域を使う
             printf("Not found space area. Use echo area\n");
             addr = mEchoRegion;
-            count = sizeof(boot_code);
         }
     }
-    for (int i=addr; i<(addr+count); i++) {
+    for (int i=addr; i<(addr+codeSize); i++) {
+        m_pRamData[i] = dspregAccCode[i-addr];
+    }
+    
+    mBootPtr = addr;
+    
+    printf ("bootloader located: $%04x\n", mBootPtr);
+}
+
+//-----------------------------------------------------------------------------
+void SPCFile::FindAndLocateBootCode()
+{
+    int codeSize = sizeof(boot_code);
+    
+    // RAM終端から探し、エコー領域を除いて同じ値が77byte以上続く場所にブートローダーを仕込む
+    int addr = findFreeArea(codeSize);
+    if (addr == 0xff) {
+        if (mEchoSize < codeSize) {
+            printf("Not enough RAM for boot code.\n");
+            return;
+        }
+        else {
+            //見つからなければエコー領域を使う
+            printf("Not found space area. Use echo area\n");
+            addr = mEchoRegion;
+        }
+    }
+    for (int i=addr; i<(addr+codeSize); i++) {
         m_pRamData[i] = boot_code[i-addr];
     }
     

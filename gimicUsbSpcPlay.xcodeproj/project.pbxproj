@@ -7,14 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F52C3D0119FD0EF900FADE5C /* dsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CF419FD0EF900FADE5C /* dsp.cpp */; };
+		F52C3D0219FD0EF900FADE5C /* SNES_SPC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CF619FD0EF900FADE5C /* SNES_SPC.cpp */; };
+		F52C3D0319FD0EF900FADE5C /* SNES_SPC_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CF819FD0EF900FADE5C /* SNES_SPC_misc.cpp */; };
+		F52C3D0419FD0EF900FADE5C /* SNES_SPC_state.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CF919FD0EF900FADE5C /* SNES_SPC_state.cpp */; };
+		F52C3D0519FD0EF900FADE5C /* spc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CFA19FD0EF900FADE5C /* spc.cpp */; };
+		F52C3D0619FD0EF900FADE5C /* SPC_DSP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CFD19FD0EF900FADE5C /* SPC_DSP.cpp */; };
+		F52C3D0719FD0EF900FADE5C /* SPC_Filter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CFF19FD0EF900FADE5C /* SPC_Filter.cpp */; };
+		F52C3D0819FD1DCA00FADE5C /* SpcControlDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */; };
+		F52C3D0919FD1DCD00FADE5C /* BulkUsbDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */; };
 		F5585FA0194DA613002A9AF7 /* SPCFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F5585F9D194DA613002A9AF7 /* SPCFile.cpp */; };
 		F5585FA4194DA6B6002A9AF7 /* FileAccess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F5585FA2194DA6B6002A9AF7 /* FileAccess.cpp */; };
 		F57BAFBA194C69E800E9D728 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFB9194C69E800E9D728 /* main.cpp */; };
 		F57BAFC5194C6A6300E9D728 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC4194C6A6300E9D728 /* Foundation.framework */; };
 		F57BAFC7194C6A6900E9D728 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC6194C6A6900E9D728 /* IOKit.framework */; };
 		F57BAFC9194C6AA400E9D728 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC8194C6AA400E9D728 /* libusb-1.0.a */; };
-		F57BAFD2194C6D4F00E9D728 /* BulkUsbDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */; };
-		F57BAFD5194C759700E9D728 /* SpcControlDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,6 +37,23 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F52C3CF019FD0EF900FADE5C /* blargg_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blargg_common.h; sourceTree = "<group>"; };
+		F52C3CF119FD0EF900FADE5C /* blargg_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blargg_config.h; sourceTree = "<group>"; };
+		F52C3CF219FD0EF900FADE5C /* blargg_endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blargg_endian.h; sourceTree = "<group>"; };
+		F52C3CF319FD0EF900FADE5C /* blargg_source.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blargg_source.h; sourceTree = "<group>"; };
+		F52C3CF419FD0EF900FADE5C /* dsp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dsp.cpp; sourceTree = "<group>"; };
+		F52C3CF519FD0EF900FADE5C /* dsp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dsp.h; sourceTree = "<group>"; };
+		F52C3CF619FD0EF900FADE5C /* SNES_SPC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SNES_SPC.cpp; sourceTree = "<group>"; };
+		F52C3CF719FD0EF900FADE5C /* SNES_SPC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SNES_SPC.h; sourceTree = "<group>"; };
+		F52C3CF819FD0EF900FADE5C /* SNES_SPC_misc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SNES_SPC_misc.cpp; sourceTree = "<group>"; };
+		F52C3CF919FD0EF900FADE5C /* SNES_SPC_state.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SNES_SPC_state.cpp; sourceTree = "<group>"; };
+		F52C3CFA19FD0EF900FADE5C /* spc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = spc.cpp; sourceTree = "<group>"; };
+		F52C3CFB19FD0EF900FADE5C /* spc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = spc.h; sourceTree = "<group>"; };
+		F52C3CFC19FD0EF900FADE5C /* SPC_CPU.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPC_CPU.h; sourceTree = "<group>"; };
+		F52C3CFD19FD0EF900FADE5C /* SPC_DSP.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SPC_DSP.cpp; sourceTree = "<group>"; };
+		F52C3CFE19FD0EF900FADE5C /* SPC_DSP.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPC_DSP.h; sourceTree = "<group>"; };
+		F52C3CFF19FD0EF900FADE5C /* SPC_Filter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SPC_Filter.cpp; sourceTree = "<group>"; };
+		F52C3D0019FD0EF900FADE5C /* SPC_Filter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SPC_Filter.h; sourceTree = "<group>"; };
 		F5585F9D194DA613002A9AF7 /* SPCFile.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SPCFile.cpp; path = gimicUsbSpcPlay/SPCFile.cpp; sourceTree = "<group>"; };
 		F5585F9E194DA613002A9AF7 /* SPCFile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SPCFile.h; path = gimicUsbSpcPlay/SPCFile.h; sourceTree = "<group>"; };
 		F5585FA2194DA6B6002A9AF7 /* FileAccess.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileAccess.cpp; path = gimicUsbSpcPlay/FileAccess.cpp; sourceTree = "<group>"; };
@@ -59,6 +83,30 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F52C3CEF19FD0EF900FADE5C /* snes_spc */ = {
+			isa = PBXGroup;
+			children = (
+				F52C3CF019FD0EF900FADE5C /* blargg_common.h */,
+				F52C3CF119FD0EF900FADE5C /* blargg_config.h */,
+				F52C3CF219FD0EF900FADE5C /* blargg_endian.h */,
+				F52C3CF319FD0EF900FADE5C /* blargg_source.h */,
+				F52C3CF419FD0EF900FADE5C /* dsp.cpp */,
+				F52C3CF519FD0EF900FADE5C /* dsp.h */,
+				F52C3CF619FD0EF900FADE5C /* SNES_SPC.cpp */,
+				F52C3CF719FD0EF900FADE5C /* SNES_SPC.h */,
+				F52C3CF819FD0EF900FADE5C /* SNES_SPC_misc.cpp */,
+				F52C3CF919FD0EF900FADE5C /* SNES_SPC_state.cpp */,
+				F52C3CFA19FD0EF900FADE5C /* spc.cpp */,
+				F52C3CFB19FD0EF900FADE5C /* spc.h */,
+				F52C3CFC19FD0EF900FADE5C /* SPC_CPU.h */,
+				F52C3CFD19FD0EF900FADE5C /* SPC_DSP.cpp */,
+				F52C3CFE19FD0EF900FADE5C /* SPC_DSP.h */,
+				F52C3CFF19FD0EF900FADE5C /* SPC_Filter.cpp */,
+				F52C3D0019FD0EF900FADE5C /* SPC_Filter.h */,
+			);
+			path = snes_spc;
+			sourceTree = "<group>";
+		};
 		F5585F94194DA5C5002A9AF7 /* SPCFile */ = {
 			isa = PBXGroup;
 			children = (
@@ -76,6 +124,7 @@
 				F57BAFC8194C6AA400E9D728 /* libusb-1.0.a */,
 				F57BAFC6194C6A6900E9D728 /* IOKit.framework */,
 				F57BAFC4194C6A6300E9D728 /* Foundation.framework */,
+				F52C3CEF19FD0EF900FADE5C /* snes_spc */,
 				F57BAFB8194C69E800E9D728 /* gimicUsbSpcPlay */,
 				F5585F94194DA5C5002A9AF7 /* SPCFile */,
 				F57BAFB7194C69E800E9D728 /* Products */,
@@ -153,11 +202,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F57BAFD2194C6D4F00E9D728 /* BulkUsbDevice.cpp in Sources */,
+				F52C3D0419FD0EF900FADE5C /* SNES_SPC_state.cpp in Sources */,
+				F52C3D0519FD0EF900FADE5C /* spc.cpp in Sources */,
+				F52C3D0919FD1DCD00FADE5C /* BulkUsbDevice.cpp in Sources */,
 				F57BAFBA194C69E800E9D728 /* main.cpp in Sources */,
+				F52C3D0619FD0EF900FADE5C /* SPC_DSP.cpp in Sources */,
 				F5585FA0194DA613002A9AF7 /* SPCFile.cpp in Sources */,
+				F52C3D0819FD1DCA00FADE5C /* SpcControlDevice.cpp in Sources */,
+				F52C3D0319FD0EF900FADE5C /* SNES_SPC_misc.cpp in Sources */,
+				F52C3D0219FD0EF900FADE5C /* SNES_SPC.cpp in Sources */,
+				F52C3D0119FD0EF900FADE5C /* dsp.cpp in Sources */,
 				F5585FA4194DA6B6002A9AF7 /* FileAccess.cpp in Sources */,
-				F57BAFD5194C759700E9D728 /* SpcControlDevice.cpp in Sources */,
+				F52C3D0719FD0EF900FADE5C /* SPC_Filter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,6 +224,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "compiler-default";
 				CLANG_ENABLE_MODULES = YES;
@@ -213,6 +270,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "compiler-default";
 				CLANG_ENABLE_MODULES = YES;
