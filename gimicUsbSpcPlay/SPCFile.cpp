@@ -127,7 +127,7 @@ bool SPCFile::Load()
 #endif
 	
     //オリジナルのデータをコピー
-    memccpy(m_pOriinalData, m_pFileData, 1, SPC_READ_SIZE);
+    memcpy(m_pOriinalData, m_pFileData, SPC_READ_SIZE);
     
 	//ファイルチェック
 //	if ( strncmp((char*)m_pFileData, "SNES-SPC700 Sound File Data v0.30", 33) != 0 ) {
