@@ -42,6 +42,8 @@ int main(int argc, char *argv[])
     cout << "Loaded " << argv[1] << endl;
     
 #ifdef SMC_EMU
+    unsigned char kon = spc->GetDspReg()[0x4c];
+    unsigned char flg = spc->GetDspReg()[0x6c];
     // 数秒間エミュレーションを回した後のRAMを使う
     DspRegFIFO dspRegFIFO;
     SNES_SPC spcPlay;
@@ -131,17 +133,21 @@ int main(int argc, char *argv[])
     
     //SPCファイルのDSPレジスタを復元
     {
-        unsigned char *dspReg = spc->GetDspReg();
-        for (int i=0; i<128; i++) {
-            device->BlockWrite(1, i);
-            device->BlockWrite(2, dspReg[i]);
-            device->BlockWrite(0, port0state);
-            device->ReadAndWait(0, port0state);
-            port0state = (port0state+1) & 0xff;
-        }
+        device->BlockWrite(1, 0x6c);
+        device->BlockWrite(2, flg);
+        device->BlockWrite(0, port0state);
+        device->ReadAndWait(0, port0state);
+        port0state = (port0state+1) & 0xff;
+        device->WriteBuffer();
+        
+        device->BlockWrite(1, 0x4c);
+        device->BlockWrite(2, kon);
+        device->BlockWrite(0, port0state);
+        device->ReadAndWait(0, port0state);
+        port0state = (port0state+1) & 0xff;
         device->WriteBuffer();
     }
-    
+
     timeval prevTime;
     timeval nowTime;
     gettimeofday(&prevTime, NULL);
