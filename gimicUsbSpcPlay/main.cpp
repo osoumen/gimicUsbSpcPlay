@@ -119,6 +119,7 @@ int main(int argc, char *argv[])
     // 波形テーブルの内容を演奏中に書き換えるもの
     // 波形自身を演奏中に書き換えるもの
     // 空きRAMスペースがエコー領域しか無いようなもの
+    // 聖剣３が何故か鳴らない
     
     err = spcPlay.load_spc(spc->GetOriginalData(), spc->GetSPCReadSize());
     if (err) {
@@ -145,6 +146,20 @@ int main(int argc, char *argv[])
     timeval nowTime;
     gettimeofday(&prevTime, NULL);
     for (;;) {
+        //1ms待つ
+        for (;;) {
+            gettimeofday(&nowTime, NULL);
+            int elapsedTime = (nowTime.tv_sec - prevTime.tv_sec) * 1e6 + (nowTime.tv_usec - prevTime.tv_usec);
+            if (elapsedTime >= 1000) {
+                break;
+            }
+        }
+        prevTime.tv_usec += 1000;
+        if (prevTime.tv_usec >= 1000000) {
+            prevTime.tv_usec -= 1000000;
+            prevTime.tv_sec++;
+        }
+
         err = spcPlay.play(64, NULL);   //1ms動作させる
         if (err) {
             printf("%s\n", err);
@@ -161,20 +176,6 @@ int main(int argc, char *argv[])
                 port0state = (port0state+1) & 0xff;
             }
             device->WriteBuffer();
-        }
-
-        //1ms待つ
-        for (;;) {
-            gettimeofday(&nowTime, NULL);
-            int elapsedTime = (nowTime.tv_sec - prevTime.tv_sec) * 1e6 + (nowTime.tv_usec - prevTime.tv_usec);
-            if (elapsedTime >= 1000) {
-                break;
-            }
-        }
-        prevTime.tv_usec += 1000;
-        if (prevTime.tv_usec >= 1000000) {
-            prevTime.tv_usec -= 1000000;
-            prevTime.tv_sec++;
         }
     }
 #endif
