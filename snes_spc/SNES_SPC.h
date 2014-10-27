@@ -83,6 +83,8 @@ public:
 	
 	// Skips count samples. Several times faster than play() when using fast DSP.
 	blargg_err_t skip( int count );
+    
+    uint8_t *GetRam() { return m.ram.ram; }
 	
 // State save/load (only available with accurate DSP)
 

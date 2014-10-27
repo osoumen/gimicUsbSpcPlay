@@ -11,7 +11,7 @@
 using namespace std;
 
 #define SMC_EMU
-
+/*
 void PrintHexData(const unsigned char *data, int bytes)
 {
     for (int i=0; i<bytes; i++) {
@@ -26,7 +26,7 @@ void PrintHexData(const unsigned char *data, int bytes)
         
     }
 }
-
+*/
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -41,10 +41,28 @@ int main(int argc, char *argv[])
     }
     cout << "Loaded " << argv[1] << endl;
     
-    spc->Fill0EchoRegion();
 #ifdef SMC_EMU
+    // 数秒間エミュレーションを回した後のRAMを使う
+    DspRegFIFO dspRegFIFO;
+    SNES_SPC spcPlay;
+    blargg_err_t err;
+    spcPlay.init();
+    err = spcPlay.load_spc(spc->GetOriginalData(), spc->GetSPCReadSize());
+    if (err) {
+        printf("load_spc:%s\n", err);
+        exit(1);
+    }
+    err = spcPlay.play(32000*4, NULL);   //空動作させる
+    dspRegFIFO.Clear();
+    if (err) {
+        printf("%s\n", err);
+        exit(1);
+    }
+    memcpy(spc->GetRamData(), spcPlay.GetRam(), 0x10000);
+    spc->Fill0EchoRegion();
     spc->FindAndLocateDspAccCode();
 #else
+    spc->Fill0EchoRegion();
     spc->FindAndLocateBootCode();
 #endif
     
@@ -94,10 +112,6 @@ int main(int argc, char *argv[])
     
     // エミュレーションでSPCを再生
 #ifdef SMC_EMU
-    DspRegFIFO dspRegFIFO;
-    SNES_SPC spcPlay;
-    blargg_err_t err;
-    spcPlay.init();
     err = spcPlay.load_spc(spc->GetOriginalData(), spc->GetSPCReadSize());
     if (err) {
         printf("load_spc:%s\n", err);
@@ -106,6 +120,9 @@ int main(int argc, char *argv[])
     spcPlay.clear_echo();
     
     int port0state = 0x01;
+    timeval prevTime;
+    timeval nowTime;
+    gettimeofday(&prevTime, NULL);
     for (;;) {
         err = spcPlay.play(64, NULL);   //1ms動作させる
         if (err) {
@@ -120,11 +137,20 @@ int main(int argc, char *argv[])
                 device->BlockWrite(2, write.data);
                 device->BlockWrite(0, port0state);
                 device->ReadAndWait(0, port0state);
-                port0state++;
+                port0state = (port0state+1) & 0xff;
             }
             device->WriteBuffer();
         }
-        usleep(500);
+
+        //1ms待つ
+        for (;;) {
+            gettimeofday(&nowTime, NULL);
+            int elapsedTime = (nowTime.tv_sec - prevTime.tv_sec) * 1e6 + (nowTime.tv_usec - prevTime.tv_usec);
+            if (elapsedTime >= 1000) {
+                break;
+            }
+        }
+        prevTime = nowTime;
     }
 #endif
     
