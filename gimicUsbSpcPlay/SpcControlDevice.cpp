@@ -261,3 +261,16 @@ void SpcControlDevice::JumpToBootloader(int addr,
     BlockWrite(3, p3);
     WriteBuffer();
 }
+
+void SpcControlDevice::JumpToDspCode(int addr)
+{
+    BlockWrite(3, (addr >> 8) & 0xff);
+    BlockWrite(2, addr & 0xff);
+    BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
+    unsigned char port0state = 0xff;//PortRead(0);
+    port0state += 2;
+    BlockWrite(0, port0state);
+    // ブートローダーがP3に0x77を書き込むのを待つ
+    ReadAndWait(3, 0x77);
+    WriteBuffer();
+}

@@ -3,6 +3,7 @@
 // snes_spc 0.9.0. http://www.slack.net/~ant/
 
 #include "SNES_SPC.h"
+#include "DspRegFIFO.h"
 
 #include <string.h>
 
@@ -173,8 +174,13 @@ inline void SNES_SPC::dsp_write( int data, rel_time_t time )
 		SPC_DSP_WRITE_HOOK( m.spc_time + time, REGS [r_dspaddr], (uint8_t) data );
 	#endif
 	
-	if ( REGS [r_dspaddr] <= 0x7F )
+	if ( REGS [r_dspaddr] <= 0x7F ) {
 		dsp.write( REGS [r_dspaddr], data );
+        DspRegFIFO *dspRegFIFO = DspRegFIFO::GetInstance();
+        if (dspRegFIFO) {
+            dspRegFIFO->AddDspWrite(0, REGS [r_dspaddr], data);
+        }
+    }
 	else if ( !SPC_MORE_ACCURACY )
 		dprintf( "SPC wrote to DSP register > $7F\n" );
 }

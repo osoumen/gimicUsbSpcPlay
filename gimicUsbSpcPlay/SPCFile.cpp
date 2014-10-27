@@ -62,7 +62,20 @@ unsigned char boot_code[] =
 //-----------------------------------------------------------------------------
 unsigned char dspregAccCode[] =
 {
-    0xE8, 0xFF, 0x64, 0xF4, 0xF0, 0x08, 0xFA, 0xF5, 0xF2, 0xFA, 0xF6, 0xF3, 0xC4, 0xF4, 0x2F, 0xF2
+    /*
+     mov SPC_PORT3,#$77
+     mov a,#$00
+     loop:
+     cmp a,SPC_PORT0
+     beq +
+     mov a,SPC_PORT0
+     mov SPC_REGADDR,SPC_PORT1
+     mov SPC_REGDATA,SPC_PORT2
+     mov SPC_PORT0,a
+     +
+     bra loop
+     */
+    0x8F, 0x77, 0xF7, 0xE8, 0x00, 0x64, 0xF4, 0xF0, 0x0A, 0xE4, 0xF4, 0xFA, 0xF5, 0xF2, 0xFA, 0xF6, 0xF3, 0xC4, 0xF4, 0x2F, 0xF0
 };
 
 //-----------------------------------------------------------------------------
@@ -280,6 +293,9 @@ void SPCFile::FindAndLocateDspAccCode()
     }
     
     mBootPtr = addr;
+    
+    m_pDspReg[0x6C] = 0x60;
+    m_pDspReg[0x4C] = 0x00;
     
     printf ("bootloader located: $%04x\n", mBootPtr);
 }

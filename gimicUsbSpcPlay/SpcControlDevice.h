@@ -31,6 +31,7 @@ public:
     void JumpToBootloader(int addr,
                           unsigned char p0, unsigned char p1,
                           unsigned char p2, unsigned char p3);
+    void JumpToDspCode(int addr);
 
 private:
     static const int GIMIC_USBVID = 0x16c0;
