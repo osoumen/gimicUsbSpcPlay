@@ -59,6 +59,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
     memcpy(spc->GetRamData(), spcPlay.GetRam(), 0x10000);
+    // エコー領域をクリアしておく
+    spc->SetEchoRegion(spcPlay.GetDspReg(0x6d) << 8);
+    spc->SetEchoSize((spcPlay.GetDspReg(0x7d) & 0x0f) * 2048);
     spc->Fill0EchoRegion();
     spc->FindAndLocateDspAccCode();
 #else

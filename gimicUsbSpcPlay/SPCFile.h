@@ -24,6 +24,8 @@ public:
     int             GetBootPtr() { return mBootPtr; }
 	unsigned char	*GetSampleIndex( int sampleIndex, int *size );
 	int				GetLoopSizeIndex( int samleIndex );	//負数でループ無し
+    void            SetEchoRegion(int value) { mEchoRegion = value; }
+    void            SetEchoSize(int value) { mEchoSize = value; }
 	
 	virtual bool	Load();
 	
