@@ -153,7 +153,11 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-        prevTime = nowTime;
+        prevTime.tv_usec += 1000;
+        if (prevTime.tv_usec >= 1000000) {
+            prevTime.tv_usec -= 1000000;
+            prevTime.tv_sec++;
+        }
     }
 #endif
     
