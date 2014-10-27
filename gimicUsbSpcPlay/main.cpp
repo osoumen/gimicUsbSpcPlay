@@ -115,14 +115,32 @@ int main(int argc, char *argv[])
     
     // エミュレーションでSPCを再生
 #ifdef SMC_EMU
+    // 再生出来ないもの
+    // 波形テーブルの内容を演奏中に書き換えるもの
+    // 波形自身を演奏中に書き換えるもの
+    // 空きRAMスペースがエコー領域しか無いようなもの
+    
     err = spcPlay.load_spc(spc->GetOriginalData(), spc->GetSPCReadSize());
     if (err) {
         printf("load_spc:%s\n", err);
         exit(1);
     }
-    spcPlay.clear_echo();
     
     int port0state = 0x01;
+    
+    //SPCファイルのDSPレジスタを復元
+    {
+        unsigned char *dspReg = spc->GetDspReg();
+        for (int i=0; i<128; i++) {
+            device->BlockWrite(1, i);
+            device->BlockWrite(2, dspReg[i]);
+            device->BlockWrite(0, port0state);
+            device->ReadAndWait(0, port0state);
+            port0state = (port0state+1) & 0xff;
+        }
+        device->WriteBuffer();
+    }
+    
     timeval prevTime;
     timeval nowTime;
     gettimeofday(&prevTime, NULL);
