@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     // 波形テーブルの内容を演奏中に書き換えるもの
     // 波形自身を演奏中に書き換えるもの
     // 空きRAMスペースがエコー領域しか無いようなもの
-    // 聖剣３が何故か鳴らない
+    // 聖剣３の再生がなぜか変
     
     err = spcPlay.load_spc(spc->GetOriginalData(), spc->GetSPCReadSize());
     if (err) {
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
         device->ReadAndWait(0, port0state);
         port0state = (port0state+1) & 0xff;
         device->WriteBuffer();
-        
+        usleep(1000);
         device->BlockWrite(1, 0x4c);
         device->BlockWrite(2, kon);
         device->BlockWrite(0, port0state);
