@@ -170,6 +170,7 @@ int main(int argc, char *argv[])
             if (elapsedTime >= 1000) {
                 break;
             }
+            usleep(100);
         }
         prevTime.tv_usec += 1000;
         if (prevTime.tv_usec >= 1000000) {
