@@ -42,8 +42,6 @@ int main(int argc, char *argv[])
     cout << "Loaded " << argv[1] << endl;
     
 #ifdef SMC_EMU
-    unsigned char kon = spc->GetDspReg()[0x4c];
-    unsigned char flg = spc->GetDspReg()[0x6c];
     // 数秒間エミュレーションを回した後のRAMを使う
     DspRegFIFO dspRegFIFO;
     SNES_SPC spcPlay;
@@ -121,7 +119,6 @@ int main(int argc, char *argv[])
     // 波形テーブルの内容を演奏中に書き換えるもの
     // 波形自身を演奏中に書き換えるもの
     // 空きRAMスペースがエコー領域しか無いようなもの
-    // 聖剣３の再生がなぜか変
     
     err = spcPlay.load_spc(spc->GetOriginalData(), spc->GetSPCReadSize());
     if (err) {
@@ -133,13 +130,27 @@ int main(int argc, char *argv[])
     
     //SPCファイルのDSPレジスタを復元
     {
+        unsigned char *dspData = spc->GetOriginalDspReg();
+        unsigned char kon = dspData[0x4c];
+        unsigned char flg = dspData[0x6c];
+
+        for (int i=0; i<128; i++) {
+            if (i == 0x6c || i == 0x4c) {
+                continue;
+            }
+            device->BlockWrite(1, i);
+            device->BlockWrite(2, dspData[i]);
+            device->BlockWrite(0, port0state);
+            device->ReadAndWait(0, port0state);
+            port0state = (port0state+1) & 0xff;
+            device->WriteBuffer();
+        }
         device->BlockWrite(1, 0x6c);
         device->BlockWrite(2, flg);
         device->BlockWrite(0, port0state);
         device->ReadAndWait(0, port0state);
         port0state = (port0state+1) & 0xff;
         device->WriteBuffer();
-        usleep(1000);
         device->BlockWrite(1, 0x4c);
         device->BlockWrite(2, kon);
         device->BlockWrite(0, port0state);
@@ -180,6 +191,9 @@ int main(int argc, char *argv[])
                 device->BlockWrite(0, port0state);
                 device->ReadAndWait(0, port0state);
                 port0state = (port0state+1) & 0xff;
+                if (write.addr == 0x5c) {       // KOFとKOFが同タイミングで起こるのを防ぐ
+                    device->WriteBuffer();
+                }
             }
             device->WriteBuffer();
         }

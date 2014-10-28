@@ -20,6 +20,7 @@ public:
     unsigned char	*GetDspReg() { return m_pDspReg; }
     unsigned char	*GetExram() { return m_pExram; }
     unsigned char   *GetOriginalData() { return m_pOriinalData; }
+    unsigned char   *GetOriginalDspReg() { return (m_pOriinalData + 0x100 + 0x10000); }
     int             GetSPCReadSize() { return SPC_READ_SIZE; }
     int             GetBootPtr() { return mBootPtr; }
 	unsigned char	*GetSampleIndex( int sampleIndex, int *size );
