@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "SpcControlDevice.h"
 #include "SPCFile.h"
 #include "SNES_SPC.h"
