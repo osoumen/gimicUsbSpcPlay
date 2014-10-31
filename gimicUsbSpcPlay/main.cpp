@@ -89,13 +89,14 @@ int main(int argc, char *argv[])
     device->WaitReady();
     
     // 0ページとDSPレジスタを転送
-    device->UploadDSPRegAndZeroPage(spc->GetDspReg(), spc->GetRamData());
+    device->UploadDSPReg(spc->GetDspReg());
+    device->UploadZeroPageIPL(spc->GetRamData());
     cout << "dspreg, zeropage OK." << endl;
     
     // 0ページ以降のRAMを転送
     cout << "Writing to RAM";
     unsigned char *spcRam = spc->GetRamData();
-    device->UploadRAMData(spcRam+0x100, 0x100, 0x10000 - 0x100);
+    device->UploadRAMDataIPL(spcRam+0x100, 0x100, 0x10000 - 0x100);
     
     // ブートローダーへジャンプ
 #ifdef SMC_EMU
@@ -134,7 +135,15 @@ int main(int argc, char *argv[])
         unsigned char *dspData = spc->GetOriginalDspReg();
         unsigned char kon = dspData[0x4c];
         unsigned char flg = dspData[0x6c];
-
+        /*
+        // サラウンド無効的なもの
+        if (dspData[0x0c] >= 0x80) {
+            dspData[0x0c] = ~dspData[0x0c] + 1;
+        }
+        if (dspData[0x1c] >= 0x80) {
+            dspData[0x1c] = ~dspData[0x1c] + 1;
+        }
+*/
         for (int i=0; i<128; i++) {
             if (i == 0x6c || i == 0x4c) {
                 continue;

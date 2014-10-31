@@ -25,8 +25,9 @@ public:
     void BlockWrite(int addr, unsigned char data);
     void ReadAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
-    void UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned char *zeroPageRam);
-    void UploadRAMData(unsigned char *ram, int addr, int size);
+    void UploadDSPReg(unsigned char *dspReg);
+    void UploadZeroPageIPL(unsigned char *zeroPageRam);
+    void UploadRAMDataIPL(unsigned char *ram, int addr, int size);
     void WaitReady();
     void JumpToBootloader(int addr,
                           unsigned char p0, unsigned char p1,

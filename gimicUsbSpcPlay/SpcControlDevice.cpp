@@ -150,7 +150,7 @@ void SpcControlDevice::WaitReady()
     }
 }
 
-void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned char *zeroPageRam)
+void SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
 {
     uploadDSPRamLoadCode(0x0002);   // $0002 にコードを書き込む
     // DSPロードプログラムのアドレスをP2,P3にセットして、P0に16+1を書き込む
@@ -171,8 +171,13 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
     // 正常に128バイト書き込まれたなら、プログラムはここで $ffc7 へジャンプされ、
     // P0に $AA が書き込まれる
     ReadAndWait(0, 0xaa);
-    // 次に、IPLを利用して、0ページに書き込む
-    port0state = 0;
+    WriteBuffer();
+}
+
+void SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
+{
+    // IPLを利用して、0ページに書き込む
+    unsigned char port0state = 0;
     BlockWrite(2, 0x02);
     BlockWrite(3, 0x00);
     BlockWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
@@ -187,7 +192,7 @@ void SpcControlDevice::UploadDSPRegAndZeroPage(unsigned char *dspReg, unsigned c
     WriteBuffer();
 }
 
-void SpcControlDevice::UploadRAMData(unsigned char *ram, int addr, int size)
+void SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
 {
     BlockWrite(2, addr & 0xff);
     BlockWrite(3, (addr >> 8) & 0xff);
