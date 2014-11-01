@@ -136,6 +136,10 @@ void SpcControlDevice::WriteBuffer()
         }
          */
         //printf("mWriteBytes:%d\n", mWriteBytes);
+        // GIMIC側のパケットは64バイト固定なので満たない場合0xffでパディングする
+        while (mWriteBytes < 64) {
+            mWriteBuf[mWriteBytes++] = 0xff;
+        }
         mUsbDev->WriteBytes(mWriteBuf, &mWriteBytes);
         mWriteBytes = BLOCKWRITE_CMD_LEN;
     }
