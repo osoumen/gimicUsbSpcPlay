@@ -203,9 +203,10 @@ int main(int argc, char *argv[])
                 device->BlockWrite(0, port0state);
                 device->ReadAndWait(0, port0state);
                 port0state = (port0state+1) & 0xff;
+                /*
                 if (write.addr == 0x5c) {       // KOFとKOFが同タイミングで起こるのを防ぐ
                     device->WriteBuffer();
-                }
+                }*/
             }
             device->WriteBuffer();
         }
