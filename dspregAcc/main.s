@@ -46,14 +46,19 @@ main:
 	mov SPC_PORT3,#$77
 	mov a,#$00
 loop:
-	cmp a,SPC_PORT0
-	beq +
-	mov a,SPC_PORT0
+	cmp a,SPC_PORT0		; 3
+	beq +				; 2/4
+	mov a,SPC_PORT0		; 3
 	mov SPC_REGADDR,SPC_PORT1
 	mov SPC_REGDATA,SPC_PORT2
-	mov SPC_PORT0,a
+	mov SPC_PORT0,a		; 4
+	; wait 48 cycle
+	mov x,#7	; 2
+-
+	dec x		; 2
+	bne -		; 2/4
 +
-	bra loop
+	bra loop			; 4
 
 	.db $ee
 	.db $ee
