@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
         unsigned char *dspData = spc->GetOriginalDspReg();
         unsigned char kon = dspData[0x4c];
         unsigned char flg = dspData[0x6c];
-        /*
+        
         // サラウンド無効的なもの
         if (dspData[0x0c] >= 0x80) {
             dspData[0x0c] = ~dspData[0x0c] + 1;
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
         if (dspData[0x1c] >= 0x80) {
             dspData[0x1c] = ~dspData[0x1c] + 1;
         }
-*/
+
         for (int i=0; i<128; i++) {
             if (i == 0x6c || i == 0x4c) {
                 continue;
@@ -172,23 +172,24 @@ int main(int argc, char *argv[])
     timeval prevTime;
     timeval nowTime;
     gettimeofday(&prevTime, NULL);
+    static const int cycle_us = 1000;
     for (;;) {
         //1ms待つ
         for (;;) {
             gettimeofday(&nowTime, NULL);
             int elapsedTime = (nowTime.tv_sec - prevTime.tv_sec) * 1e6 + (nowTime.tv_usec - prevTime.tv_usec);
-            if (elapsedTime >= 1000) {
+            if (elapsedTime >= cycle_us) {
                 break;
             }
             usleep(100);
         }
-        prevTime.tv_usec += 1000;
+        prevTime.tv_usec += cycle_us;
         if (prevTime.tv_usec >= 1000000) {
             prevTime.tv_usec -= 1000000;
             prevTime.tv_sec++;
         }
 
-        err = spcPlay.play(64, NULL);   //1ms動作させる
+        err = spcPlay.play((cycle_us / 125) * 8, NULL);   //1ms動作させる
         if (err) {
             printf("%s\n", err);
             exit(1);
