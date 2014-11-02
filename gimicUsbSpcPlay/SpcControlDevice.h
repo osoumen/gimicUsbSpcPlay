@@ -44,6 +44,7 @@ private:
     static const int GIMIC_USBWPIPE = 0x02;
     static const int GIMIC_USBRPIPE = 0x85;
     static const int BLOCKWRITE_CMD_LEN = 4;
+    static const int MAX_ASYNC_READ = 64;
 
     BulkUsbDevice   *mUsbDev;
     unsigned char   mWriteBuf[64];

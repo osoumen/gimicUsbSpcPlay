@@ -13,6 +13,8 @@ using namespace std;
 
 int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *ram, int bootPtr);
 
+#define RETRY_NUM (5)
+
 #define SMC_EMU
 /*
 void PrintHexData(const unsigned char *data, int bytes)
@@ -83,7 +85,15 @@ int main(int argc, char *argv[])
     timeval startTime;
     gettimeofday(&startTime, NULL );
     
-    int trErr = transferSpc(device, spc->GetDspReg(), spc->GetRamData(), spc->GetBootPtr());
+    // 失敗したら一定回数までリトライする
+    int retry = RETRY_NUM;
+    int trErr = 0;
+    do {
+        trErr = transferSpc(device, spc->GetDspReg(), spc->GetRamData(), spc->GetBootPtr());
+        if (trErr == 0) break;
+        usleep(100000);
+        retry--;
+    } while (retry > 0);
     if (trErr) {
         cout << "transfer error." << endl;
         exit(1);
@@ -178,8 +188,8 @@ int main(int argc, char *argv[])
         }
         size_t numWrites = dspRegFIFO.GetNumWrites();
         if (numWrites > 0) {
-            device->TryTransferError();
             for (size_t i=0; i<numWrites; i++) {
+                device->TryTransferError();
                 DspRegFIFO::DspWrite write = dspRegFIFO.PopFront();
                 device->BlockWrite(1, write.addr);
                 device->BlockWrite(2, write.data);
@@ -190,11 +200,17 @@ int main(int argc, char *argv[])
                 if (write.addr == 0x5c) {       // KOFとKOFが同タイミングで起こるのを防ぐ
                     device->WriteBuffer();
                 }*/
+                int err = device->CatchTransferError();
+                if (err) {
+                    //device->FlushReadTransferDevice();
+                    break;
+                }
             }
             device->WriteBuffer();
             int err = device->CatchTransferError();
             if (err) {
-                device->FlushReadTransferDevice();
+                //device->FlushReadTransferDevice();
+                break;
             }
         }
     }

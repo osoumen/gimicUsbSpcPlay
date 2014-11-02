@@ -148,6 +148,9 @@ void SpcControlDevice::WriteBuffer()
 
 void SpcControlDevice::FlushReadTransferDevice(int maxTry)
 {
+    mUsbDev->CancelAllAsyncRead();
+    mNumReads = 0;
+    mUsbDev->GetReadBytesPtr();
     // GIMIC側がハングしないように送られているデータをすべて拾う
     int err = 0;
     for (int i=0; ((i<maxTry) || (maxTry==0)) && (err == 0); i++) {
@@ -158,7 +161,7 @@ void SpcControlDevice::FlushReadTransferDevice(int maxTry)
 
 void SpcControlDevice::TryTransferError()
 {
-    if (mNumReads == 0) {
+    while (mNumReads < MAX_ASYNC_READ) {
         mUsbDev->ReadBytesAsync(64);
         mNumReads++;
     }
@@ -167,9 +170,9 @@ void SpcControlDevice::TryTransferError()
 int SpcControlDevice::CatchTransferError()
 {
     if (mUsbDev->GetAvailableInBytes()) {
+        mNumReads -= mUsbDev->GetAvailableInBytes() / 64;
         unsigned char *msg = mUsbDev->GetReadBytesPtr();
         int err = *(reinterpret_cast<unsigned int*>(msg));
-        mNumReads = 0;
         if (err == 0xfefefefe) {
             return err;
         }
@@ -219,6 +222,9 @@ int SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
             ReadAndWait(0, port0state);
         }
         port0state++;
+        if (i == 127) {
+            WriteBuffer();
+        }
         err = CatchTransferError();
         if (err) {
             FlushReadTransferDevice();
@@ -248,13 +254,15 @@ int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
         BlockWrite(0, port0state);
         ReadAndWait(0, port0state);
         port0state++;
+        if (i == 0xef) {
+            WriteBuffer();
+        }
         int err = CatchTransferError();
         if (err) {
             FlushReadTransferDevice();
             return err;
         }
     }
-    WriteBuffer();
     return 0;
 }
 
@@ -279,13 +287,15 @@ int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
         if ((i % 256) == 255) {
             std::cout << ".";
         }
+        if (i == (size-1)) {
+            WriteBuffer();
+        }
         int err = CatchTransferError();
         if (err) {
             FlushReadTransferDevice();
             return err;
         }
     }
-    WriteBuffer();
     return 0;
 }
 
@@ -318,13 +328,15 @@ int SpcControlDevice::uploadDSPRamLoadCode(int addr)
         BlockWrite(1, dspram_write_code[i]);
         BlockWrite(0, i & 0xff);
         ReadAndWait(0, i&0xff);
+        if (i == (sizeof(dspram_write_code)-1)) {
+            WriteBuffer();
+        }
         int err = CatchTransferError();
         if (err) {
             FlushReadTransferDevice();
             return err;
         }
     }
-    WriteBuffer();
     return 0;
 }
 

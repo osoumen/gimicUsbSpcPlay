@@ -37,7 +37,7 @@ private:
     static const int WRITE_BUF_SIZE = 4096;
     static const int READ_BUF_SIZE = 4096;
     static const int WRITE_TRANSFER_NUM = 1024;
-    static const int READ_TRANSFER_NUM = 16;
+    static const int READ_TRANSFER_NUM = 1024;
     
     libusb_context          *mCtx;
     libusb_device_handle    *mDevHandle;
