@@ -11,6 +11,8 @@
 
 using namespace std;
 
+int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *ram, int bootPtr);
+
 #define SMC_EMU
 /*
 void PrintHexData(const unsigned char *data, int bytes)
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
     SpcControlDevice    *device = new SpcControlDevice();
     
     if (device->Init() != 0) {
+        cout << "device initialize error." << endl;
         exit(1);
     }
     
@@ -80,33 +83,12 @@ int main(int argc, char *argv[])
     timeval startTime;
     gettimeofday(&startTime, NULL );
     
-    // ハードウェアリセット
-    device->HwReset();
-    // ソフトウェアリセット
-    device->SwReset();
-    
-    // $BBAA 待ち
-    device->WaitReady();
-    
-    // 0ページとDSPレジスタを転送
-    device->UploadDSPReg(spc->GetDspReg());
-    device->UploadZeroPageIPL(spc->GetRamData());
-    cout << "dspreg, zeropage OK." << endl;
-    
-    // 0ページ以降のRAMを転送
-    cout << "Writing to RAM";
-    unsigned char *spcRam = spc->GetRamData();
-    device->UploadRAMDataIPL(spcRam+0x100, 0x100, 0x10000 - 0x100);
-    
-    // ブートローダーへジャンプ
-#ifdef SMC_EMU
-    device->JumpToDspCode(spc->GetBootPtr());
-#else
-    device->JumpToBootloader(spc->GetBootPtr(),
-                             spcRam[0xf4], spcRam[0xf5],
-                             spcRam[0xf6], spcRam[0xf7]);
-#endif
-    
+    int trErr = transferSpc(device, spc->GetDspReg(), spc->GetRamData(), spc->GetBootPtr());
+    if (trErr) {
+        cout << "transfer error." << endl;
+        exit(1);
+    }
+
     cout << "finished." << endl;
     
     timeval endTime;
@@ -196,6 +178,7 @@ int main(int argc, char *argv[])
         }
         size_t numWrites = dspRegFIFO.GetNumWrites();
         if (numWrites > 0) {
+            device->TryTransferError();
             for (size_t i=0; i<numWrites; i++) {
                 DspRegFIFO::DspWrite write = dspRegFIFO.PopFront();
                 device->BlockWrite(1, write.addr);
@@ -209,6 +192,10 @@ int main(int argc, char *argv[])
                 }*/
             }
             device->WriteBuffer();
+            int err = device->CatchTransferError();
+            if (err) {
+                device->FlushReadTransferDevice();
+            }
         }
     }
 #endif
@@ -218,4 +205,56 @@ int main(int argc, char *argv[])
     delete device;
     
 	return 0;
+}
+
+int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *ram, int bootPtr)
+{
+    int err = 0;
+    
+    // ハードウェアリセット
+    device->HwReset();
+    // ソフトウェアリセット
+    device->SwReset();
+    
+    // $BBAA 待ち
+    err = device->WaitReady();
+    if (err) {
+        return err;
+    }
+    
+    // 0ページとDSPレジスタを転送
+    err = device->UploadDSPReg(dspReg);
+    if (err) {
+        return err;
+    }
+    
+    err = device->UploadZeroPageIPL(ram);
+    if (err) {
+        return err;
+    }
+    cout << "dspreg, zeropage OK." << endl;
+    
+    // 0ページ以降のRAMを転送
+    cout << "Writing to RAM";
+    err = device->UploadRAMDataIPL(ram+0x100, 0x100, 0x10000 - 0x100);
+    if (err) {
+        return err;
+    }
+    
+    // ブートローダーへジャンプ
+#ifdef SMC_EMU
+    err = device->JumpToDspCode(bootPtr);
+    if (err) {
+        return err;
+    }
+#else
+    err = device->JumpToBootloader(bootPtr,
+                                   ram[0xf4], ram[0xf5],
+                                   ram[0xf6], ram[0xf7]);
+    if (err) {
+        return err;
+    }
+#endif
+
+    return 0;
 }

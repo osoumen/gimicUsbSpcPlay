@@ -25,14 +25,18 @@ public:
     void BlockWrite(int addr, unsigned char data);
     void ReadAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
-    void UploadDSPReg(unsigned char *dspReg);
-    void UploadZeroPageIPL(unsigned char *zeroPageRam);
-    void UploadRAMDataIPL(unsigned char *ram, int addr, int size);
-    void WaitReady();
-    void JumpToBootloader(int addr,
+    void FlushReadTransferDevice(int maxTry=0);
+    int UploadDSPReg(unsigned char *dspReg);
+    int UploadZeroPageIPL(unsigned char *zeroPageRam);
+    int UploadRAMDataIPL(unsigned char *ram, int addr, int size);
+    int WaitReady();
+    int JumpToBootloader(int addr,
                           unsigned char p0, unsigned char p1,
                           unsigned char p2, unsigned char p3);
-    void JumpToDspCode(int addr);
+    int JumpToDspCode(int addr);
+    
+    void TryTransferError();
+    int CatchTransferError();
 
 private:
     static const int GIMIC_USBVID = 0x16c0;
@@ -46,7 +50,9 @@ private:
     unsigned char   mReadBuf[64];
     int             mWriteBytes;
     
-    void uploadDSPRamLoadCode(int addr);
+    int uploadDSPRamLoadCode(int addr);
+    
+    int mNumReads;  // Read待ちのパケット数
 };
 
 #endif /* defined(__gimicUsbSpcPlay__SpcControlDevice__) */

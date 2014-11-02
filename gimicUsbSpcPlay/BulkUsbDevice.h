@@ -23,15 +23,21 @@ public:
     int CloseDevice();
     // データを書き込む
     int WriteBytes(unsigned char *data, int *bytes);
-    //int WriteBytesAsync(unsigned char *data, int *bytes);
+    int WriteBytesAsync(unsigned char *data, int *bytes);
     // データを読み出す
     int ReadBytes(unsigned char *data, int *bytes, int timeOut);
+    int ReadBytesAsync(int bytes);
+    int GetAvailableInBytes();
+    unsigned char *GetReadBytesPtr();
+    void CancelAllAsyncRead();
     
-    //void HandleEvents();
+    void HandleEvents();
 
 private:
-    //static const int WRITE_BUF_SIZE = 4096;
-    //static const int WRITE_TRANSFER_NUM = 1024;
+    static const int WRITE_BUF_SIZE = 4096;
+    static const int READ_BUF_SIZE = 4096;
+    static const int WRITE_TRANSFER_NUM = 1024;
+    static const int READ_TRANSFER_NUM = 16;
     
     libusb_context          *mCtx;
     libusb_device_handle    *mDevHandle;
@@ -39,13 +45,23 @@ private:
     int                     mProductID;
     int                     mWPipe;
     int                     mRPipe;
-    //unsigned char           mWriteBuf[WRITE_BUF_SIZE];
-    //int                     mWriteBufPtr;
-    //struct libusb_transfer *m_pTransferOut[WRITE_TRANSFER_NUM];
-    //int                     mTransferPtr;
-    //int                     mNumTransfers;
+    
+    unsigned char           mWriteBuf[WRITE_BUF_SIZE];
+    int                     mWriteBufPtr;
+    struct libusb_transfer *m_pTransferOut[WRITE_TRANSFER_NUM];
+    int                     mTransferOutPtr;
+    int                     mNumTransfersOut;
+    
+    unsigned char           mReadBuf[READ_BUF_SIZE];
+    int                     mReadBufPtr;
+    struct libusb_transfer *m_pTransferIn[READ_TRANSFER_NUM];
+    int                     mTransferInPtr;
+    int                     mNumTransfersIn;
+    unsigned char           mReadAvailableBuf[READ_BUF_SIZE];
+    int                     mAvailableInBytes;
     
     static void LIBUSB_CALL callbackOut(struct libusb_transfer *transfer);
+    static void LIBUSB_CALL callbackIn(struct libusb_transfer *transfer);
 };
 
 #endif /* defined(__gimicUsbSpcPlay__BulkUsbDevice__) */

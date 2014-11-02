@@ -28,6 +28,7 @@ int SpcControlDevice::Init()
         return 1;
     }
     mWriteBytes = BLOCKWRITE_CMD_LEN;    // 0xFD,0xB2,0xNN分
+    mNumReads = 0;
     return r;
 }
 
@@ -136,8 +137,8 @@ void SpcControlDevice::WriteBuffer()
         }
          */
         //printf("mWriteBytes:%d\n", mWriteBytes);
-        // GIMIC側のパケットは64バイト固定なので満たない場合0xffでパディングする
-        while (mWriteBytes < 64) {
+        // GIMIC側のパケットは64バイト固定なので満たない場合0xffを末尾に追加
+        if (mWriteBytes < 64) {
             mWriteBuf[mWriteBytes++] = 0xff;
         }
         mUsbDev->WriteBytes(mWriteBuf, &mWriteBytes);
@@ -145,18 +146,63 @@ void SpcControlDevice::WriteBuffer()
     }
 }
 
-void SpcControlDevice::WaitReady()
+void SpcControlDevice::FlushReadTransferDevice(int maxTry)
 {
+    // GIMIC側がハングしないように送られているデータをすべて拾う
+    int err = 0;
+    for (int i=0; ((i<maxTry) || (maxTry==0)) && (err == 0); i++) {
+        int rb = 64;
+        err = mUsbDev->ReadBytes(mReadBuf, &rb, 1);
+    }
+}
+
+void SpcControlDevice::TryTransferError()
+{
+    if (mNumReads == 0) {
+        mUsbDev->ReadBytesAsync(64);
+        mNumReads++;
+    }
+}
+
+int SpcControlDevice::CatchTransferError()
+{
+    if (mUsbDev->GetAvailableInBytes()) {
+        unsigned char *msg = mUsbDev->GetReadBytesPtr();
+        int err = *(reinterpret_cast<unsigned int*>(msg));
+        mNumReads = 0;
+        return err;
+    }
+    return 0;
+}
+
+//-----------------------------------------------------------------------------
+
+int SpcControlDevice::WaitReady()
+{
+    TryTransferError();
+    
     if (mUsbDev->IsInitialized()) {
         ReadAndWait(0, 0xaa);
         ReadAndWait(1, 0xbb);
         WriteBuffer();
     }
+    
+    int err = CatchTransferError();
+    if (err) {
+        FlushReadTransferDevice();
+        return err;
+    }
+    return 0;
 }
 
-void SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
+int SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
 {
-    uploadDSPRamLoadCode(0x0002);   // $0002 にコードを書き込む
+    int err = uploadDSPRamLoadCode(0x0002); // $0002 にコードを書き込む
+    if (err) {
+        return err;
+    }
+    
+    TryTransferError();
     // DSPロードプログラムのアドレスをP2,P3にセットして、P0に16+1を書き込む
     BlockWrite(2, 0x02);
     BlockWrite(3, 0x00);
@@ -171,15 +217,23 @@ void SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
             ReadAndWait(0, port0state);
         }
         port0state++;
+        err = CatchTransferError();
+        if (err) {
+            FlushReadTransferDevice();
+            return err;
+        }
     }
     // 正常に128バイト書き込まれたなら、プログラムはここで $ffc7 へジャンプされ、
     // P0に $AA が書き込まれる
     ReadAndWait(0, 0xaa);
     WriteBuffer();
+    return 0;
 }
 
-void SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
+int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
 {
+    TryTransferError();
+    
     // IPLを利用して、0ページに書き込む
     unsigned char port0state = 0;
     BlockWrite(2, 0x02);
@@ -192,12 +246,20 @@ void SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
         BlockWrite(0, port0state);
         ReadAndWait(0, port0state);
         port0state++;
+        int err = CatchTransferError();
+        if (err) {
+            FlushReadTransferDevice();
+            return err;
+        }
     }
     WriteBuffer();
+    return 0;
 }
 
-void SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
+int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
 {
+    TryTransferError();
+    
     BlockWrite(2, addr & 0xff);
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
@@ -215,11 +277,17 @@ void SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
         if ((i % 256) == 255) {
             std::cout << ".";
         }
+        int err = CatchTransferError();
+        if (err) {
+            FlushReadTransferDevice();
+            return err;
+        }
     }
     WriteBuffer();
+    return 0;
 }
 
-void SpcControlDevice::uploadDSPRamLoadCode(int addr)
+int SpcControlDevice::uploadDSPRamLoadCode(int addr)
 {
     unsigned char dspram_write_code[16] =
     {   //128バイトの DSPレジスタをロードするためのコード
@@ -237,6 +305,7 @@ void SpcControlDevice::uploadDSPRamLoadCode(int addr)
          */
         0xC4, 0xF2, 0x64, 0xF4, 0xD0, 0xFC, 0xFA, 0xF5, 0xF3, 0xC4, 0xF4, 0xBC, 0x10, 0xF2, 0x2F, 0xB7,
     };
+    TryTransferError();
     
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
@@ -247,14 +316,22 @@ void SpcControlDevice::uploadDSPRamLoadCode(int addr)
         BlockWrite(1, dspram_write_code[i]);
         BlockWrite(0, i & 0xff);
         ReadAndWait(0, i&0xff);
+        int err = CatchTransferError();
+        if (err) {
+            FlushReadTransferDevice();
+            return err;
+        }
     }
     WriteBuffer();
+    return 0;
 }
 
-void SpcControlDevice::JumpToBootloader(int addr,
+int SpcControlDevice::JumpToBootloader(int addr,
                                         unsigned char p0, unsigned char p1,
                                         unsigned char p2, unsigned char p3)
 {
+    TryTransferError();
+    
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
@@ -269,10 +346,19 @@ void SpcControlDevice::JumpToBootloader(int addr,
     BlockWrite(2, p2);
     BlockWrite(3, p3);
     WriteBuffer();
+    
+    int err = CatchTransferError();
+    if (err) {
+        FlushReadTransferDevice();
+        return err;
+    }
+    return 0;
 }
 
-void SpcControlDevice::JumpToDspCode(int addr)
+int SpcControlDevice::JumpToDspCode(int addr)
 {
+    TryTransferError();
+    
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
@@ -282,4 +368,11 @@ void SpcControlDevice::JumpToDspCode(int addr)
     // ブートローダーがP3に0x77を書き込むのを待つ
     ReadAndWait(3, 0x77);
     WriteBuffer();
+    
+    int err = CatchTransferError();
+    if (err) {
+        FlushReadTransferDevice();
+        return err;
+    }
+    return 0;
 }
