@@ -170,7 +170,9 @@ int SpcControlDevice::CatchTransferError()
         unsigned char *msg = mUsbDev->GetReadBytesPtr();
         int err = *(reinterpret_cast<unsigned int*>(msg));
         mNumReads = 0;
-        return err;
+        if (err == 0xfefefefe) {
+            return err;
+        }
     }
     return 0;
 }
