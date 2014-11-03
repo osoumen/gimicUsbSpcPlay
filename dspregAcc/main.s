@@ -49,9 +49,9 @@ loop:
 	beq loop			; 2
 	mov a,SPC_PORT0		; 3
 	bmi toram			; 2
-	mov x,SPC_PORT1		; 3
+	mov x,SPC_PORT2		; 3
 	mov SPC_REGADDR,x	; 4
-	mov SPC_REGDATA,SPC_PORT2
+	mov SPC_REGDATA,SPC_PORT1
 	mov SPC_PORT0,a		; 4
 	; wait 64 - 32 cycle
 	cmp x,#$4c	; 3
@@ -67,8 +67,8 @@ wait:
 toram:
 	mov x,a
 	mov y,#0
-	mov a,SPC_PORT3
-	mov [SPC_PORT1]+y,a
+	mov a,SPC_PORT1
+	mov [SPC_PORT2]+y,a
 	mov a,x
 	mov SPC_PORT0,a
 	bra loop
