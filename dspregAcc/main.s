@@ -42,7 +42,6 @@ srcdir:
 
 	.db "SS"
 main:
-	
 	mov a,#$00
 	mov SPC_PORT3,#$77
 loop:

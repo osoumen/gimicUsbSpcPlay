@@ -85,6 +85,8 @@ int main(int argc, char *argv[])
     } while (retry > 0);
     if (trErr) {
         cout << "transfer error." << endl;
+        device->Close();
+        delete device;
         exit(1);
     }
 
