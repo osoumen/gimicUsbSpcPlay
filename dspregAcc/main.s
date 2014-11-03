@@ -40,28 +40,32 @@ srcdir:
 .bank 1 slot 1
 .section "CODE"
 
-	.db $cc
-	.db $cc
+	.db "ST"
 main:
 	mov SPC_PORT3,#$77
 	mov a,#$00
 loop:
 	cmp a,SPC_PORT0		; 3
-	beq +				; 2/4
+	beq loop			; 2
 	mov a,SPC_PORT0		; 3
-	mov SPC_REGADDR,SPC_PORT1
+	mov x,SPC_PORT1		; 3
+	mov SPC_REGADDR,x	; 4
 	mov SPC_REGDATA,SPC_PORT2
 	mov SPC_PORT0,a		; 4
-	; wait 48 cycle
-	mov x,#7	; 2
+	; wait 64 - 30 cycle
+	cmp x,#$4c	; 3
+	beq wait	; 4
+	cmp x,#$5c	; 3
+	bne loop	; 4
+wait:
+	mov y,#5	; 2
 -
-	dec x		; 2
-	bne -		; 2/4
-+
-	bra loop			; 4
+	dbnz y,-	; 4/6
+	nop			; 2
+	nop			; 2
+	bra loop	; 4
 
-	.db $ee
-	.db $ee
+	.db "ED"
 
 .ends
 
