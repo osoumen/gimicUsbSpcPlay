@@ -74,6 +74,7 @@ int BulkUsbDevice::OpenDevice(int vid, int pid, int wpipe, int rpipe)
 		return 1;
 	}
     
+    mIsQuitting = false;
     ReadBytesAsync(64);
     
     return 0;
@@ -83,8 +84,8 @@ int BulkUsbDevice::CloseDevice()
 {
     int r = 0;
     if (mDevHandle) {
-        CancelAllAsyncRead();
-        while (mNumTransfersOut > 0) {
+        CancelAllAsyncRead(true);
+        while (mNumTransfersOut > 0 || mNumTransfersIn > 0) {
             usleep(1000);
             ::libusb_handle_events(mCtx);
         }
@@ -231,16 +232,17 @@ void BulkUsbDevice::callbackIn(struct libusb_transfer *transfer)
 {
     BulkUsbDevice *This = reinterpret_cast<BulkUsbDevice *>(transfer->user_data);
     if (transfer->status == LIBUSB_TRANSFER_COMPLETED) {
-        This->mNumTransfersIn--;
         memcpy(&This->mReadAvailableBuf[This->mAvailableInBytes], transfer->buffer, transfer->length);
         This->mAvailableInBytes += transfer->length;
     }
+    This->mNumTransfersIn--;
     ::libusb_free_transfer(transfer);
-    
-    This->ReadBytesAsync(64);
+    if (!This->mIsQuitting) {
+        This->ReadBytesAsync(64);
+    }
 }
 
-void BulkUsbDevice::CancelAllAsyncRead()
+void BulkUsbDevice::CancelAllAsyncRead(bool quitting)
 {
     int transferInPtr = mTransferInPtr;
     for (int i=0; i<mNumTransfersIn; i++) {
@@ -249,6 +251,6 @@ void BulkUsbDevice::CancelAllAsyncRead()
             transferInPtr = READ_TRANSFER_NUM - 1;
         }
         ::libusb_cancel_transfer(m_pTransferIn[transferInPtr]);
+        mIsQuitting = quitting;
     }
-    mNumTransfersIn = 0;
 }

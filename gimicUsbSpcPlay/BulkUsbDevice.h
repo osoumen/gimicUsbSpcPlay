@@ -29,7 +29,7 @@ public:
     int ReadBytesAsync(int bytes);
     int GetAvailableInBytes();
     unsigned char *GetReadBytesPtr();
-    void CancelAllAsyncRead();
+    void CancelAllAsyncRead(bool quitting);
     
     void HandleEvents();
 
@@ -37,7 +37,7 @@ private:
     static const int WRITE_BUF_SIZE = 4096;
     static const int READ_BUF_SIZE = 4096;
     static const int WRITE_TRANSFER_NUM = 1024;
-    static const int READ_TRANSFER_NUM = 1024;
+    static const int READ_TRANSFER_NUM = 1;
     
     libusb_context          *mCtx;
     libusb_device_handle    *mDevHandle;
@@ -59,6 +59,8 @@ private:
     int                     mNumTransfersIn;
     unsigned char           mReadAvailableBuf[READ_BUF_SIZE];
     int                     mAvailableInBytes;
+    
+    bool                    mIsQuitting;
     
     static void LIBUSB_CALL callbackOut(struct libusb_transfer *transfer);
     static void LIBUSB_CALL callbackIn(struct libusb_transfer *transfer);
