@@ -11,7 +11,11 @@
 
 using namespace std;
 
+void sigcatch(int);
 int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *ram, int bootPtr);
+
+static SpcControlDevice    *device = NULL;
+static int port0state = 0x01;
 
 #define RETRY_NUM (5)
 
@@ -74,12 +78,14 @@ int main(int argc, char *argv[])
     spc->FindAndLocateBootCode();
 #endif
     
-    SpcControlDevice    *device = new SpcControlDevice();
+    device = new SpcControlDevice();
     
     if (device->Init() != 0) {
         cout << "device initialize error." << endl;
         exit(1);
     }
+    
+    signal(SIGTERM, sigcatch);
     
     // 時間計測
     timeval startTime;
@@ -119,8 +125,6 @@ int main(int argc, char *argv[])
         printf("load_spc:%s\n", err);
         exit(1);
     }
-    
-    int port0state = 0x01;
     
     //SPCファイルのDSPレジスタを復元
     {
@@ -195,10 +199,6 @@ int main(int argc, char *argv[])
                 device->BlockWrite(0, port0state);
                 device->ReadAndWait(0, port0state);
                 port0state = (port0state+1) & 0xff;
-                /*
-                if (write.addr == 0x5c) {       // KOFとKOFが同タイミングで起こるのを防ぐ
-                    device->WriteBuffer();
-                }*/
             }
             device->WriteBuffer();
             int err = device->CatchTransferError();
@@ -266,4 +266,27 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
 #endif
 
     return 0;
+}
+
+void sigcatch(int sig)
+{
+    if (device) {
+        device->BlockWrite(1, 0x6c);
+        device->BlockWrite(2, 0);
+        device->BlockWrite(0, port0state);
+        device->ReadAndWait(0, port0state);
+        port0state = (port0state+1) & 0xff;
+        device->WriteBuffer();
+        // kof
+        device->BlockWrite(1, 0x5c);
+        device->BlockWrite(2, 0xff);
+        device->BlockWrite(0, port0state);
+        device->ReadAndWait(0, port0state);
+        port0state = (port0state+1) & 0xff;
+        device->WriteBuffer();
+        
+        device->Close();
+        delete device;
+    }
+    exit(1);
 }
