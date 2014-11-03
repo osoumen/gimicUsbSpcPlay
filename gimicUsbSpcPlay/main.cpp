@@ -17,25 +17,8 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
 static SpcControlDevice    *device = NULL;
 static int port0state = 0x01;
 
-#define RETRY_NUM (5)
-
 #define SMC_EMU
-/*
-void PrintHexData(const unsigned char *data, int bytes)
-{
-    for (int i=0; i<bytes; i++) {
-        cout    << setw( 2 )       // フィールド幅 2
-        << setfill( '0' )  // 0で埋める
-        << hex             // 16進数
-        << uppercase       // 大文字表示
-        << ( int )data[i]
-        << " ";
-        
-        if( i % 16 == 15 )  std::cout << std::endl;
-        
-    }
-}
-*/
+
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -92,7 +75,7 @@ int main(int argc, char *argv[])
     gettimeofday(&startTime, NULL );
     
     // 失敗したら一定回数までリトライする
-    int retry = RETRY_NUM;
+    int retry = 5;
     int trErr = 0;
     do {
         trErr = transferSpc(device, spc->GetDspReg(), spc->GetRamData(), spc->GetBootPtr());
