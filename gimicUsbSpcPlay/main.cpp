@@ -214,36 +214,40 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
         return err;
     }
     
+#ifndef SMC_EMU
     // 0ページとDSPレジスタを転送
     err = device->UploadDSPReg(dspReg);
-    if (err) {
+    if (err < 0) {
         return err;
     }
     
     err = device->UploadZeroPageIPL(ram);
-    if (err) {
+    if (err < 0) {
         return err;
     }
     cout << "dspreg, zeropage OK." << endl;
-    
     // 0ページ以降のRAMを転送
     cout << "Writing to RAM";
-    err = device->UploadRAMDataIPL(ram+0x100, 0x100, 0x10000 - 0x100);
-    if (err) {
+    err = device->UploadRAMDataIPL(ram+0x100, 0x100, 0x10000 - 0x100, err+1);
+#else
+    cout << "Writing to RAM";
+    err = device->UploadRAMDataIPL(ram+0x100, 0x100, 0x10000 - 0x100, 0xcc);
+#endif
+    if (err < 0) {
         return err;
     }
     
     // ブートローダーへジャンプ
 #ifdef SMC_EMU
-    err = device->JumpToDspCode(bootPtr);
-    if (err) {
+    err = device->JumpToDspCode(bootPtr, err+1);
+    if (err < 0) {
         return err;
     }
 #else
-    err = device->JumpToBootloader(bootPtr,
+    err = device->JumpToBootloader(bootPtr, err+1,
                                    ram[0xf4], ram[0xf5],
                                    ram[0xf6], ram[0xf7]);
-    if (err) {
+    if (err < 0) {
         return err;
     }
 #endif

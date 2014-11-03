@@ -232,16 +232,15 @@ int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
             return err;
         }
     }
-    return 0;
+    return port0state;
 }
 
-int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
+int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size, unsigned char initialP0state)
 {
     BlockWrite(2, addr & 0xff);
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
-    unsigned char port0State = 0xed;//PortRead(0);
-    port0State += 2;
+    unsigned char port0State = initialP0state;
     BlockWrite(0, port0State & 0xff);
     ReadAndWait(0, port0State&0xff);
     port0State = 0;
@@ -262,7 +261,7 @@ int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
             return err;
         }
     }
-    return 0;
+    return port0State;
 }
 
 int SpcControlDevice::uploadDSPRamLoadCode(int addr)
@@ -303,15 +302,14 @@ int SpcControlDevice::uploadDSPRamLoadCode(int addr)
     return 0;
 }
 
-int SpcControlDevice::JumpToBootloader(int addr,
+int SpcControlDevice::JumpToBootloader(int addr, unsigned char initialP0state,
                                         unsigned char p0, unsigned char p1,
                                         unsigned char p2, unsigned char p3)
 {
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
-    unsigned char port0state = 0xff;//PortRead(0);
-    port0state += 2;
+    unsigned char port0state = initialP0state;
     BlockWrite(0, port0state);
     // ブートローダーがP0に'S'を書き込むのを待つ
     ReadAndWait(0, 'S');
@@ -329,13 +327,12 @@ int SpcControlDevice::JumpToBootloader(int addr,
     return 0;
 }
 
-int SpcControlDevice::JumpToDspCode(int addr)
+int SpcControlDevice::JumpToDspCode(int addr, unsigned char initialP0state)
 {
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
-    unsigned char port0state = 0xff;//PortRead(0);
-    port0state += 2;
+    unsigned char port0state = initialP0state;
     BlockWrite(0, port0state);
     // ブートローダーがP3に0x77を書き込むのを待つ
     ReadAndWait(3, 0x77);

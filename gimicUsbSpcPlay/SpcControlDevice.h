@@ -27,12 +27,12 @@ public:
     void WriteBuffer();
     int UploadDSPReg(unsigned char *dspReg);
     int UploadZeroPageIPL(unsigned char *zeroPageRam);
-    int UploadRAMDataIPL(unsigned char *ram, int addr, int size);
+    int UploadRAMDataIPL(unsigned char *ram, int addr, int size, unsigned char initialP0state);
     int WaitReady();
-    int JumpToBootloader(int addr,
+    int JumpToBootloader(int addr, unsigned char initialP0state,
                           unsigned char p0, unsigned char p1,
                           unsigned char p2, unsigned char p3);
-    int JumpToDspCode(int addr);
+    int JumpToDspCode(int addr, unsigned char initialP0state);
     
     int CatchTransferError();
 
