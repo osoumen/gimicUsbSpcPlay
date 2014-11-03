@@ -98,16 +98,18 @@ int main(int argc, char *argv[])
     
     // エミュレーションでSPCを再生
 #ifdef SMC_EMU
-    // 再生出来ないもの
-    // 波形テーブルの内容を演奏中に書き換えるもの
-    // 波形自身を演奏中に書き換えるもの
-    // 空きRAMスペースがエコー領域しか無いようなもの
+    // 再生出来ない可能性のあるもの
+    // $00f0,$00f1 をいじってるもの
+    // ダイレクトページ1を使ってるもの
+    // タイミングがシビアなもの
     
     err = spcPlay.load_spc(spc->GetOriginalData(), spc->GetSPCReadSize());
     if (err) {
         printf("load_spc:%s\n", err);
         exit(1);
     }
+    
+    port0state = 0x01;
     
     //SPCファイルのDSPレジスタを復元
     {
@@ -131,20 +133,20 @@ int main(int argc, char *argv[])
             device->BlockWrite(2, dspData[i]);
             device->BlockWrite(0, port0state);
             device->ReadAndWait(0, port0state);
-            port0state = (port0state+1) & 0xff;
+            port0state = port0state ^ 0x01;
             device->WriteBuffer();
         }
         device->BlockWrite(1, 0x6c);
         device->BlockWrite(2, flg);
         device->BlockWrite(0, port0state);
         device->ReadAndWait(0, port0state);
-        port0state = (port0state+1) & 0xff;
+        port0state = port0state ^ 0x01;
         device->WriteBuffer();
         device->BlockWrite(1, 0x4c);
         device->BlockWrite(2, kon);
         device->BlockWrite(0, port0state);
         device->ReadAndWait(0, port0state);
-        port0state = (port0state+1) & 0xff;
+        port0state = port0state ^ 0x01;
         device->WriteBuffer();
     }
 
@@ -177,11 +179,22 @@ int main(int argc, char *argv[])
         if (numWrites > 0) {
             for (size_t i=0; i<numWrites; i++) {
                 DspRegFIFO::DspWrite write = dspRegFIFO.PopFront();
-                device->BlockWrite(1, write.addr);
-                device->BlockWrite(2, write.data);
-                device->BlockWrite(0, port0state);
-                device->ReadAndWait(0, port0state);
-                port0state = (port0state+1) & 0xff;
+                if (write.isRam) {
+                    // RAM
+                    device->BlockWrite(1, write.addr & 0xff);
+                    device->BlockWrite(2, (write.addr>>8) & 0xff);
+                    device->BlockWrite(3, write.data);
+                    device->BlockWrite(0, port0state | 0x80);
+                    device->ReadAndWait(0, port0state | 0x80);
+                }
+                else {
+                    // DSPレジスタ
+                    device->BlockWrite(1, write.addr);
+                    device->BlockWrite(2, write.data);
+                    device->BlockWrite(0, port0state);
+                    device->ReadAndWait(0, port0state);
+                }
+                port0state = port0state ^ 0x01;
             }
             device->WriteBuffer();
             int err = device->CatchTransferError();
@@ -262,14 +275,14 @@ void sigcatch(int sig)
         device->BlockWrite(2, 0);
         device->BlockWrite(0, port0state);
         device->ReadAndWait(0, port0state);
-        port0state = (port0state+1) & 0xff;
+        port0state = port0state ^ 0x01;
         device->WriteBuffer();
         // kof
         device->BlockWrite(1, 0x5c);
         device->BlockWrite(2, 0xff);
         device->BlockWrite(0, port0state);
         device->ReadAndWait(0, port0state);
-        port0state = (port0state+1) & 0xff;
+        port0state = port0state ^ 0x01;
         device->WriteBuffer();
         
         device->Close();

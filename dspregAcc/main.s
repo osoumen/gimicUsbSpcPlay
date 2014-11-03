@@ -40,19 +40,21 @@ srcdir:
 .bank 1 slot 1
 .section "CODE"
 
-	.db "ST"
+	.db "SS"
 main:
-	mov SPC_PORT3,#$77
+	
 	mov a,#$00
+	mov SPC_PORT3,#$77
 loop:
 	cmp a,SPC_PORT0		; 3
 	beq loop			; 2
 	mov a,SPC_PORT0		; 3
+	bmi toram			; 2
 	mov x,SPC_PORT1		; 3
 	mov SPC_REGADDR,x	; 4
 	mov SPC_REGDATA,SPC_PORT2
 	mov SPC_PORT0,a		; 4
-	; wait 64 - 30 cycle
+	; wait 64 - 32 cycle
 	cmp x,#$4c	; 3
 	beq wait	; 4
 	cmp x,#$5c	; 3
@@ -62,10 +64,16 @@ wait:
 -
 	dbnz y,-	; 4/6
 	nop			; 2
-	nop			; 2
 	bra loop	; 4
-
-	.db "ED"
+toram:
+	mov x,a
+	mov y,#0
+	mov a,SPC_PORT3
+	mov [SPC_PORT1]+y,a
+	mov a,x
+	mov SPC_PORT0,a
+	bra loop
+	.db "EE"
 
 .ends
 

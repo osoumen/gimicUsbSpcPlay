@@ -449,6 +449,11 @@ void SNES_SPC::cpu_write( int data, int addr, rel_time_t time )
 			reg -= rom_addr - 0xF0;
 			if ( reg >= 0 ) // 1% in IPL ROM area or address wrapped around
 				cpu_write_high( data, reg, time );
+            
+            DspRegFIFO *dspRegFIFO = DspRegFIFO::GetInstance();
+            if (dspRegFIFO) {
+                dspRegFIFO->AddRamWrite(0, addr, data);
+            }
 		}
 	}
 }

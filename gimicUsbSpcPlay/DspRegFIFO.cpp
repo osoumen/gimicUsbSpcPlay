@@ -29,9 +29,20 @@ void DspRegFIFO::AddDspWrite(long time, unsigned char addr, unsigned char data)
 {
     DspWrite dsp;
     dsp.time = time;
+    dsp.isRam = false;
     dsp.addr = addr;
     dsp.data = data;
     mDspWrite.push_back(dsp);
+}
+
+void DspRegFIFO::AddRamWrite(long time, unsigned short addr, unsigned char data)
+{
+    DspWrite ram;
+    ram.time = time;
+    ram.isRam = true;
+    ram.addr = addr;
+    ram.data = data;
+    mDspWrite.push_back(ram);
 }
 
 DspRegFIFO::DspWrite DspRegFIFO::PopFront()

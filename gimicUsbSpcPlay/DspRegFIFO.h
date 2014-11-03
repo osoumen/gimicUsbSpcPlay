@@ -16,7 +16,8 @@ class DspRegFIFO {
 public:
     typedef struct {
         long    time;
-        unsigned char addr;
+        bool    isRam;
+        unsigned short addr;
         unsigned char data;
     } DspWrite;
     
@@ -24,11 +25,12 @@ public:
     ~DspRegFIFO();
     
     void AddDspWrite(long time, unsigned char addr, unsigned char data);
+    void AddRamWrite(long time, unsigned short addr, unsigned char data);
     size_t GetNumWrites() { return mDspWrite.size(); }
     DspWrite PopFront();
     void Clear();
     
-    std::list<DspWrite> mDspWrite;;
+    std::list<DspWrite> mDspWrite;
     
     static DspRegFIFO* GetInstance();
 };
