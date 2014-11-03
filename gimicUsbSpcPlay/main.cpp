@@ -189,7 +189,6 @@ int main(int argc, char *argv[])
         size_t numWrites = dspRegFIFO.GetNumWrites();
         if (numWrites > 0) {
             for (size_t i=0; i<numWrites; i++) {
-                device->TryTransferError();
                 DspRegFIFO::DspWrite write = dspRegFIFO.PopFront();
                 device->BlockWrite(1, write.addr);
                 device->BlockWrite(2, write.data);
@@ -200,17 +199,11 @@ int main(int argc, char *argv[])
                 if (write.addr == 0x5c) {       // KOFとKOFが同タイミングで起こるのを防ぐ
                     device->WriteBuffer();
                 }*/
-                int err = device->CatchTransferError();
-                if (err) {
-                    //device->FlushReadTransferDevice();
-                    break;
-                }
             }
             device->WriteBuffer();
             int err = device->CatchTransferError();
             if (err) {
-                //device->FlushReadTransferDevice();
-                break;
+                
             }
         }
     }

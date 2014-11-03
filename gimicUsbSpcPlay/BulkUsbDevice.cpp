@@ -74,6 +74,8 @@ int BulkUsbDevice::OpenDevice(int vid, int pid, int wpipe, int rpipe)
 		return 1;
 	}
     
+    ReadBytesAsync(64);
+    
     return 0;
 }
 
@@ -234,6 +236,8 @@ void BulkUsbDevice::callbackIn(struct libusb_transfer *transfer)
         This->mAvailableInBytes += transfer->length;
     }
     ::libusb_free_transfer(transfer);
+    
+    This->ReadBytesAsync(64);
 }
 
 void BulkUsbDevice::CancelAllAsyncRead()

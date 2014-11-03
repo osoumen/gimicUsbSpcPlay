@@ -28,7 +28,6 @@ int SpcControlDevice::Init()
         return 1;
     }
     mWriteBytes = BLOCKWRITE_CMD_LEN;    // 0xFD,0xB2,0xNN分
-    mNumReads = 0;
     return r;
 }
 
@@ -146,31 +145,9 @@ void SpcControlDevice::WriteBuffer()
     }
 }
 
-void SpcControlDevice::FlushReadTransferDevice(int maxTry)
-{
-    mUsbDev->CancelAllAsyncRead();
-    mNumReads = 0;
-    mUsbDev->GetReadBytesPtr();
-    // GIMIC側がハングしないように送られているデータをすべて拾う
-    int err = 0;
-    for (int i=0; ((i<maxTry) || (maxTry==0)) && (err == 0); i++) {
-        int rb = 64;
-        err = mUsbDev->ReadBytes(mReadBuf, &rb, 1);
-    }
-}
-
-void SpcControlDevice::TryTransferError()
-{
-    while (mNumReads < MAX_ASYNC_READ) {
-        mUsbDev->ReadBytesAsync(64);
-        mNumReads++;
-    }
-}
-
 int SpcControlDevice::CatchTransferError()
 {
     if (mUsbDev->GetAvailableInBytes()) {
-        mNumReads -= mUsbDev->GetAvailableInBytes() / 64;
         unsigned char *msg = mUsbDev->GetReadBytesPtr();
         int err = *(reinterpret_cast<unsigned int*>(msg));
         if (err == 0xfefefefe) {
@@ -184,8 +161,6 @@ int SpcControlDevice::CatchTransferError()
 
 int SpcControlDevice::WaitReady()
 {
-    TryTransferError();
-    
     if (mUsbDev->IsInitialized()) {
         ReadAndWait(0, 0xaa);
         ReadAndWait(1, 0xbb);
@@ -194,7 +169,6 @@ int SpcControlDevice::WaitReady()
     
     int err = CatchTransferError();
     if (err) {
-        FlushReadTransferDevice();
         return err;
     }
     return 0;
@@ -207,7 +181,6 @@ int SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
         return err;
     }
     
-    TryTransferError();
     // DSPロードプログラムのアドレスをP2,P3にセットして、P0に16+1を書き込む
     BlockWrite(2, 0x02);
     BlockWrite(3, 0x00);
@@ -227,7 +200,6 @@ int SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
         }
         err = CatchTransferError();
         if (err) {
-            FlushReadTransferDevice();
             return err;
         }
     }
@@ -240,8 +212,6 @@ int SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
 
 int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
 {
-    TryTransferError();
-    
     // IPLを利用して、0ページに書き込む
     unsigned char port0state = 0;
     BlockWrite(2, 0x02);
@@ -259,7 +229,6 @@ int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
         }
         int err = CatchTransferError();
         if (err) {
-            FlushReadTransferDevice();
             return err;
         }
     }
@@ -268,8 +237,6 @@ int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
 
 int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
 {
-    TryTransferError();
-    
     BlockWrite(2, addr & 0xff);
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
@@ -292,7 +259,6 @@ int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size)
         }
         int err = CatchTransferError();
         if (err) {
-            FlushReadTransferDevice();
             return err;
         }
     }
@@ -317,8 +283,6 @@ int SpcControlDevice::uploadDSPRamLoadCode(int addr)
          */
         0xC4, 0xF2, 0x64, 0xF4, 0xD0, 0xFC, 0xFA, 0xF5, 0xF3, 0xC4, 0xF4, 0xBC, 0x10, 0xF2, 0x2F, 0xB7,
     };
-    TryTransferError();
-    
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 1);
@@ -333,7 +297,6 @@ int SpcControlDevice::uploadDSPRamLoadCode(int addr)
         }
         int err = CatchTransferError();
         if (err) {
-            FlushReadTransferDevice();
             return err;
         }
     }
@@ -344,8 +307,6 @@ int SpcControlDevice::JumpToBootloader(int addr,
                                         unsigned char p0, unsigned char p1,
                                         unsigned char p2, unsigned char p3)
 {
-    TryTransferError();
-    
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
@@ -363,7 +324,6 @@ int SpcControlDevice::JumpToBootloader(int addr,
     
     int err = CatchTransferError();
     if (err) {
-        FlushReadTransferDevice();
         return err;
     }
     return 0;
@@ -371,8 +331,6 @@ int SpcControlDevice::JumpToBootloader(int addr,
 
 int SpcControlDevice::JumpToDspCode(int addr)
 {
-    TryTransferError();
-    
     BlockWrite(3, (addr >> 8) & 0xff);
     BlockWrite(2, addr & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
@@ -385,7 +343,6 @@ int SpcControlDevice::JumpToDspCode(int addr)
     
     int err = CatchTransferError();
     if (err) {
-        FlushReadTransferDevice();
         return err;
     }
     return 0;

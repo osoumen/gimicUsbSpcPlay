@@ -25,7 +25,6 @@ public:
     void BlockWrite(int addr, unsigned char data);
     void ReadAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
-    void FlushReadTransferDevice(int maxTry=0);
     int UploadDSPReg(unsigned char *dspReg);
     int UploadZeroPageIPL(unsigned char *zeroPageRam);
     int UploadRAMDataIPL(unsigned char *ram, int addr, int size);
@@ -35,7 +34,6 @@ public:
                           unsigned char p2, unsigned char p3);
     int JumpToDspCode(int addr);
     
-    void TryTransferError();
     int CatchTransferError();
 
 private:
