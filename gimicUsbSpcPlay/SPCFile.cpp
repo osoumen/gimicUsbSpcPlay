@@ -294,9 +294,9 @@ void SPCFile::FindAndLocateDspAccCode()
             return;
         }
         else {
-            //見つからなければエコー領域を使う
-            printf("Not found space area. Use echo area\n");
-            addr = mEchoRegion;
+            //見つからなければ強制的にスタック領域に入れる
+            printf("Not found space area. Use Stack area\n");
+            addr = 0x0100;
         }
     }
     for (int i=addr; i<(addr+codeSize); i++) {
