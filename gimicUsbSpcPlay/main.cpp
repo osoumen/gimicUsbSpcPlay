@@ -183,18 +183,13 @@ int main(int argc, char *argv[])
                 DspRegFIFO::DspWrite write = dspRegFIFO.PopFront();
                 if (write.isRam) {
                     // RAM
-                    device->BlockWrite(2, write.addr & 0xff);
-                    device->BlockWrite(3, (write.addr>>8) & 0xff);
-                    device->BlockWrite(1, write.data);
-                    device->BlockWrite(0, port0state | 0x80);
-                    device->ReadAndWait(0, port0state | 0x80);
+                    device->BlockWrite(1, write.data, write.addr & 0xff, (write.addr>>8) & 0xff);
+                    device->WriteAndWait(0, port0state | 0x80);
                 }
                 else {
                     // DSPレジスタ
-                    device->BlockWrite(2, write.addr);
-                    device->BlockWrite(1, write.data);
-                    device->BlockWrite(0, port0state);
-                    device->ReadAndWait(0, port0state);
+                    device->BlockWrite(1, write.data, write.addr);
+                    device->WriteAndWait(0, port0state);
                 }
                 port0state = port0state ^ 0x01;
             }
@@ -273,15 +268,13 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
 void sigcatch(int sig)
 {
     if (device) {
-        device->BlockWrite(2, 0x6c);
-        device->BlockWrite(1, 0);
+        device->BlockWrite(1, 0, 0x6c);
         device->BlockWrite(0, port0state);
         device->ReadAndWait(0, port0state);
         port0state = port0state ^ 0x01;
         device->WriteBuffer();
         // kof
-        device->BlockWrite(2, 0x5c);
-        device->BlockWrite(1, 0xff);
+        device->BlockWrite(1, 0xff, 0x5c);
         device->BlockWrite(0, port0state);
         device->ReadAndWait(0, port0state);
         port0state = port0state ^ 0x01;

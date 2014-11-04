@@ -23,7 +23,11 @@ public:
     void PortWrite(int addr, unsigned char data);
     unsigned char PortRead(int addr);
     void BlockWrite(int addr, unsigned char data);
+    void BlockWrite(int addr, unsigned char data, unsigned char data2);
+    void BlockWrite(int addr, unsigned char data, unsigned char data2, unsigned char data3);
+    void BlockWrite(int addr, unsigned char data, unsigned char data2, unsigned char data3, unsigned char data4);
     void ReadAndWait(int addr, unsigned char waitValue);
+    void WriteAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
     int UploadDSPReg(unsigned char *dspReg);
     int UploadZeroPageIPL(unsigned char *zeroPageRam);
@@ -43,6 +47,7 @@ private:
     static const int GIMIC_USBRPIPE = 0x85;
     static const int BLOCKWRITE_CMD_LEN = 4;
     static const int MAX_ASYNC_READ = 64;
+    static const int PACKET_SIZE = 64;
 
     BulkUsbDevice   *mUsbDev;
     unsigned char   mWriteBuf[64];

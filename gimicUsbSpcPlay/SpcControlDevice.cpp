@@ -75,36 +75,84 @@ unsigned char SpcControlDevice::PortRead(int addr)
 
 void SpcControlDevice::BlockWrite(int addr, unsigned char data)
 {
-    if (mWriteBytes > 62) {
-        // TODO: Assert
-        return;
+    // 残り2バイト未満なら書き込んでから追加する
+    if (mWriteBytes > (PACKET_SIZE-2)) {
+        WriteBuffer();
     }
     mWriteBuf[mWriteBytes] = addr & 0x03;
     mWriteBytes++;
     mWriteBuf[mWriteBytes] = data;
     mWriteBytes++;
-    
-    if (mWriteBytes > 62) {
-        // mWriteBufの先頭にコマンドを付けて書き込む
+}
+
+void SpcControlDevice::BlockWrite(int addr, unsigned char data, unsigned char data2)
+{
+    // 残り3バイト未満なら書き込んでから追加する
+    if (mWriteBytes > (PACKET_SIZE-3)) {
         WriteBuffer();
     }
+    mWriteBuf[mWriteBytes] = (addr & 0x03) | 0x10;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data2;
+    mWriteBytes++;
+}
+
+void SpcControlDevice::BlockWrite(int addr, unsigned char data, unsigned char data2, unsigned char data3)
+{
+    // 残り4バイト未満なら書き込んでから追加する
+    if (mWriteBytes > (PACKET_SIZE-4)) {
+        WriteBuffer();
+    }
+    mWriteBuf[mWriteBytes] = (addr & 0x03) | 0x20;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data2;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data3;
+    mWriteBytes++;
+}
+
+void SpcControlDevice::BlockWrite(int addr, unsigned char data, unsigned char data2, unsigned char data3, unsigned char data4)
+{
+    // 残り5バイト未満なら書き込んでから追加する
+    if (mWriteBytes > (PACKET_SIZE-5)) {
+        WriteBuffer();
+    }
+    mWriteBuf[mWriteBytes] = (addr & 0x03) | 0x30;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data2;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data3;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = data4;
+    mWriteBytes++;
 }
 
 void SpcControlDevice::ReadAndWait(int addr, unsigned char waitValue)
 {
-    if (mWriteBytes > 62) {
-        // TODO: Assert
-        return;
+    if (mWriteBytes > (PACKET_SIZE-2)) {
+        WriteBuffer();
     }
-    mWriteBuf[mWriteBytes] = (addr & 0x03) | 0x80;
+    mWriteBuf[mWriteBytes] = addr | 0x80;
     mWriteBytes++;
     mWriteBuf[mWriteBytes] = waitValue;
     mWriteBytes++;
-    
-    if (mWriteBytes > 62) {
-        // mWriteBufの先頭にコマンドを付けて書き込む
+}
+
+void SpcControlDevice::WriteAndWait(int addr, unsigned char waitValue)
+{
+    if (mWriteBytes > (PACKET_SIZE-2)) {
         WriteBuffer();
     }
+    mWriteBuf[mWriteBytes] = addr | 0xc0;
+    mWriteBytes++;
+    mWriteBuf[mWriteBytes] = waitValue;
+    mWriteBytes++;
 }
 
 void SpcControlDevice::WriteBuffer()
@@ -182,17 +230,17 @@ int SpcControlDevice::UploadDSPReg(unsigned char *dspReg)
     }
     
     // DSPロードプログラムのアドレスをP2,P3にセットして、P0に16+1を書き込む
-    BlockWrite(2, 0x02);
-    BlockWrite(3, 0x00);
-    BlockWrite(1, 0x00); // 0なのでP2,P3はジャンプ先アドレス
-    BlockWrite(0, 0x11); // 16バイト書き込んだので１つ飛ばして17
-    ReadAndWait(0, 0x11);
+    BlockWrite(1, 0x00, 0x02, 0x00); // 0なのでP2,P3はジャンプ先アドレス
+    WriteAndWait(0, 0x11); // 16バイト書き込んだので１つ飛ばして17
+    WriteBuffer();
     unsigned char port0state = 0;
     for (int i=0; i<128; i++) {
         BlockWrite(1, dspReg[i]);
-        BlockWrite(0, port0state);
         if (i < 127) {
-            ReadAndWait(0, port0state);
+            WriteAndWait(0, port0state);
+        }
+        else {
+            BlockWrite(0, port0state);
         }
         port0state++;
         if (i == 127) {
@@ -214,15 +262,12 @@ int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
 {
     // IPLを利用して、0ページに書き込む
     unsigned char port0state = 0;
-    BlockWrite(2, 0x02);
-    BlockWrite(3, 0x00);
-    BlockWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
-    BlockWrite(0, 0xcc); // 起動直後と同じ
-    ReadAndWait(0, 0xcc);
+    BlockWrite(1, 0x01, 0x02, 0x00); // 非0なのでP2,P3は書き込み開始アドレス
+    WriteAndWait(0, 0xcc); // 起動直後と同じ
+    WriteBuffer();
     for (int i=2; i<0xf0; i++) {
         BlockWrite(1, zeroPageRam[i]);
-        BlockWrite(0, port0state);
-        ReadAndWait(0, port0state);
+        WriteAndWait(0, port0state);
         port0state++;
         if (i == 0xef) {
             WriteBuffer();
@@ -237,18 +282,14 @@ int SpcControlDevice::UploadZeroPageIPL(unsigned char *zeroPageRam)
 
 int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size, unsigned char initialP0state)
 {
-    BlockWrite(2, addr & 0xff);
-    BlockWrite(3, (addr >> 8) & 0xff);
-    BlockWrite(1, 0x01); // 非0なのでP2,P3は書き込み開始アドレス
+    BlockWrite(1, 0x01, addr & 0xff, (addr >> 8) & 0xff); // 非0なのでP2,P3は書き込み開始アドレス
     unsigned char port0State = initialP0state;
-    BlockWrite(0, port0State & 0xff);
-    ReadAndWait(0, port0State&0xff);
+    WriteAndWait(0, port0State&0xff);
+    WriteBuffer();
     port0State = 0;
     for (int i=0; i<size; i++) {
         BlockWrite(1, ram[i]);
-        BlockWrite(0, port0State);
-        // 1バイトずつP0を確認しながら送信する本来の方法
-        ReadAndWait(0, port0State);
+        WriteAndWait(0, port0State);
         port0State++;
         if ((i % 256) == 255) {
             std::cout << ".";
@@ -282,15 +323,12 @@ int SpcControlDevice::uploadDSPRamLoadCode(int addr)
          */
         0xC4, 0xF2, 0x64, 0xF4, 0xD0, 0xFC, 0xFA, 0xF5, 0xF3, 0xC4, 0xF4, 0xBC, 0x10, 0xF2, 0x2F, 0xB7,
     };
-    BlockWrite(3, (addr >> 8) & 0xff);
-    BlockWrite(2, addr & 0xff);
-    BlockWrite(1, 1);
-    BlockWrite(0, 0xcc);
-    ReadAndWait(0, 0xcc);
+    BlockWrite(1, 1, addr & 0xff, (addr >> 8) & 0xff);
+    WriteAndWait(0, 0xcc);
+    WriteBuffer();
     for (int i=0; i<sizeof(dspram_write_code); i++) {
         BlockWrite(1, dspram_write_code[i]);
-        BlockWrite(0, i & 0xff);
-        ReadAndWait(0, i&0xff);
+        WriteAndWait(0, i&0xff);
         if (i == (sizeof(dspram_write_code)-1)) {
             WriteBuffer();
         }
