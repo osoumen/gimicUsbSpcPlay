@@ -17,7 +17,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
 static SpcControlDevice    *device = NULL;
 static int port0state = 0x01;
 
-#define SMC_EMU
+//#define SMC_EMU
 
 int main(int argc, char *argv[])
 {
@@ -225,6 +225,27 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     }
     
 #ifndef SMC_EMU
+#if 1
+    // 0ページとDSPレジスタを転送
+    err = device->UploadDSPReg2(dspReg);
+    if (err < 0) {
+        return err;
+    }
+    cout << "dspreg OK." << endl;
+    
+    // 0ページ以降のRAMを転送
+    cout << "Writing to RAM";
+    err = device->UploadRAMDataFast(ram+0x100, 0x100);
+    if (err < 0) {
+        return err;
+    }
+    
+    err = device->UploadZeroPageIPL(ram);
+    if (err < 0) {
+        return err;
+    }
+    cout << "zeropage OK." << endl;
+#else
     // 0ページとDSPレジスタを転送
     err = device->UploadDSPReg(dspReg);
     if (err < 0) {
@@ -239,6 +260,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     // 0ページ以降のRAMを転送
     cout << "Writing to RAM";
     err = device->UploadRAMDataIPL(ram+0x100, 0x100, 0x10000 - 0x100, err+1);
+#endif
 #else
     cout << "Writing to RAM";
     err = device->UploadRAMDataIPL(ram+0x100, 0x100, 0x10000 - 0x100, 0xcc);

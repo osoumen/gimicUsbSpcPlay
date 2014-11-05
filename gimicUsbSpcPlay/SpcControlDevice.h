@@ -30,8 +30,10 @@ public:
     void WriteAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
     int UploadDSPReg(unsigned char *dspReg);
+    int UploadDSPReg2(unsigned char *dspReg);
     int UploadZeroPageIPL(unsigned char *zeroPageRam);
     int UploadRAMDataIPL(unsigned char *ram, int addr, int size, unsigned char initialP0state);
+    int UploadRAMDataFast(unsigned char *ram, int addr);
     int WaitReady();
     int JumpToBootloader(int addr, unsigned char initialP0state,
                           unsigned char p0, unsigned char p1,
@@ -54,9 +56,9 @@ private:
     unsigned char   mReadBuf[64];
     int             mWriteBytes;
     
-    int uploadDSPRamLoadCode(int addr);
-    
     int mNumReads;  // Read待ちのパケット数
+    int uploadDSPRamLoadCode(int addr);    
+    int uploadDSPRamLoadCode2(int addr);
 };
 
 #endif /* defined(__gimicUsbSpcPlay__SpcControlDevice__) */
