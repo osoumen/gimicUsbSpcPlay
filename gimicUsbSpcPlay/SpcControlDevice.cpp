@@ -265,11 +265,10 @@ int SpcControlDevice::UploadDSPReg2(unsigned char *dspReg)
         return err;
     }
     // DSPロードプログラムのアドレスをP2,P3にセットして、P0にcodeSize+1を書き込む
-    BlockWrite(2, 0x02);
-    BlockWrite(3, 0x00);
+    BlockWrite(2, 0x02, 0x00);
     BlockWrite(1, 0x00); // 0なのでP2,P3はジャンプ先アドレス
     BlockWrite(0, err+1);
-    //ReadAndWait(0, codeSize+1);
+    //ReadAndWait(0, err+1);
     ReadAndWait(2, 0x53);
     unsigned char port0state = 0;
     for (int i=0; i<128; i++) {
@@ -443,8 +442,7 @@ int SpcControlDevice::uploadDSPRamLoadCode2(int addr)
     // IPLへジャンプ
     dspram_write_code[sizeof(dspram_write_code)-1] = 0xc7 - sizeof(dspram_write_code);
     
-    BlockWrite(3, (addr >> 8) & 0xff);
-    BlockWrite(2, addr & 0xff);
+    BlockWrite(2, addr & 0xff, (addr >> 8) & 0xff);
     BlockWrite(1, 1);
     WriteAndWait(0, 0xcc);
     for (int i=0; i<sizeof(dspram_write_code); i++) {
@@ -463,18 +461,13 @@ int SpcControlDevice::JumpToBootloader(int addr, unsigned char initialP0state,
                                         unsigned char p0, unsigned char p1,
                                         unsigned char p2, unsigned char p3)
 {
-    BlockWrite(3, (addr >> 8) & 0xff);
-    BlockWrite(2, addr & 0xff);
+    BlockWrite(2, addr & 0xff, (addr >> 8) & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
-    unsigned char port0state = initialP0state;
-    BlockWrite(0, port0state);
+    BlockWrite(0, initialP0state);
     // ブートローダーがP0に'S'を書き込むのを待つ
     ReadAndWait(0, 'S');
     // P0-P3を復元
-    BlockWrite(0, p0);
-    BlockWrite(1, p1);
-    BlockWrite(2, p2);
-    BlockWrite(3, p3);
+    BlockWrite(0, p0, p1, p2, p3);
     WriteBuffer();
     
     int err = CatchTransferError();
@@ -486,8 +479,7 @@ int SpcControlDevice::JumpToBootloader(int addr, unsigned char initialP0state,
 
 int SpcControlDevice::JumpToDspCode(int addr, unsigned char initialP0state)
 {
-    BlockWrite(3, (addr >> 8) & 0xff);
-    BlockWrite(2, addr & 0xff);
+    BlockWrite(2, addr & 0xff, (addr >> 8) & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
     unsigned char port0state = initialP0state;
     BlockWrite(0, port0state);
