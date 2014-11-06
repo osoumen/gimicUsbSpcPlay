@@ -17,7 +17,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
 static SpcControlDevice    *device = NULL;
 static int port0state = 0x01;
 
-//#define SMC_EMU
+#define SMC_EMU
 
 int main(int argc, char *argv[])
 {
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
             if (i == 0x6c || i == 0x4c) {
                 continue;
             }
-            device->BlockWrite(1, dspData[i], 1);
+            device->BlockWrite(1, dspData[i], i);
             device->WriteAndWait(0, port0state);
             port0state = port0state ^ 0x01;
         }
@@ -217,7 +217,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     }
     
 #ifndef SMC_EMU
-#if 0
+#if 1
     // 0ページとDSPレジスタを転送
     err = device->UploadDSPReg2(dspReg);
     if (err < 0) {
