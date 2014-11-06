@@ -17,7 +17,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
 static SpcControlDevice    *device = NULL;
 static int port0state = 0x01;
 
-#define SMC_EMU
+//#define SMC_EMU
 
 int main(int argc, char *argv[])
 {
@@ -237,6 +237,12 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
         return err;
     }
     cout << "zeropage OK." << endl;
+    
+    // 残り
+    err = device->UploadRAMDataIPL(ram+0xffbe, 0xffbe, 0x10000 - 0xffbe, err+1);
+    if (err < 0) {
+        return err;
+    }
 #else
     // 0ページとDSPレジスタを転送
     err = device->UploadDSPReg(dspReg);
