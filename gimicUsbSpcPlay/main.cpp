@@ -17,7 +17,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
 static SpcControlDevice    *device = NULL;
 static int port0state = 0x01;
 
-//#define SMC_EMU
+#define SMC_EMU
 
 int main(int argc, char *argv[])
 {
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
                 }
                 port0state = port0state ^ 0x01;
             }
-            device->WriteBuffer();
+            device->WriteBufferAsync();
             int err = device->CatchTransferError();
             if (err) {
                 

@@ -9,7 +9,8 @@
 #ifndef __gimicUsbSpcPlay__SpcControlDevice__
 #define __gimicUsbSpcPlay__SpcControlDevice__
 
-#include "BulkUsbDevice.h"
+//#include "BulkUsbDevice.h"
+#include "ControlUSB.h"
 
 class SpcControlDevice {
 public:
@@ -29,6 +30,7 @@ public:
     void ReadAndWait(int addr, unsigned char waitValue);
     void WriteAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
+    void WriteBufferAsync();
     int UploadDSPReg(unsigned char *dspReg);
     int UploadDSPReg2(unsigned char *dspReg);
     int UploadZeroPageIPL(unsigned char *zeroPageRam);
@@ -51,7 +53,7 @@ private:
     static const int MAX_ASYNC_READ = 64;
     static const int PACKET_SIZE = 64;
 
-    BulkUsbDevice   *mUsbDev;
+    ControlUSB      *mUsbDev;
     unsigned char   mWriteBuf[64];
     unsigned char   mReadBuf[64];
     int             mWriteBytes;

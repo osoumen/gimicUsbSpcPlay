@@ -12,7 +12,7 @@
 
 SpcControlDevice::SpcControlDevice()
 {
-    mUsbDev = new BulkUsbDevice();
+    mUsbDev = new ControlUSB();
 }
 
 SpcControlDevice::~SpcControlDevice()
@@ -22,34 +22,37 @@ SpcControlDevice::~SpcControlDevice()
 
 int SpcControlDevice::Init()
 {
-    int r = 0;
-    r = mUsbDev->OpenDevice(GIMIC_USBVID, GIMIC_USBPID, GIMIC_USBWPIPE, GIMIC_USBRPIPE);
-    if (mUsbDev->IsInitialized() == false) {
+    mUsbDev->BeginPortWait(GIMIC_USBVID, GIMIC_USBPID, 1, 2);
+    int retryRemain = 100;
+    while (!mUsbDev->isPlugged() && retryRemain > 0) {
+        usleep(10000);
+        retryRemain--;
+    }
+    if (!mUsbDev->isPlugged()) {
         return 1;
     }
     mWriteBytes = BLOCKWRITE_CMD_LEN;    // 0xFD,0xB2,0xNN分
-    return r;
+    return 0;
 }
 
 int SpcControlDevice::Close()
 {
-    int r = 0;
-    r = mUsbDev->CloseDevice();
-    return r;
+    mUsbDev->removeDevice();
+    return 0;
 }
 
 void SpcControlDevice::HwReset()
 {
     unsigned char cmd[] = {0xfd, 0x81, 0xff};
     int wb = sizeof(cmd);
-    mUsbDev->WriteBytes(cmd, &wb);
+    mUsbDev->bulkWrite(cmd, wb);
 }
 
 void SpcControlDevice::SwReset()
 {
     unsigned char cmd[] = {0xfd, 0x82, 0xff};
     int wb = sizeof(cmd);
-    mUsbDev->WriteBytes(cmd, &wb);
+    mUsbDev->bulkWrite(cmd, wb);
 }
 
 void SpcControlDevice::PortWrite(int addr, unsigned char data)
@@ -58,7 +61,7 @@ void SpcControlDevice::PortWrite(int addr, unsigned char data)
     cmd[0] = addr;
     cmd[1] = data;
     int wb = sizeof(cmd);
-    mUsbDev->WriteBytes(cmd, &wb);
+    mUsbDev->bulkWrite(cmd, wb);
 }
 
 unsigned char SpcControlDevice::PortRead(int addr)
@@ -66,10 +69,10 @@ unsigned char SpcControlDevice::PortRead(int addr)
     unsigned char cmd[] = {0xfd, 0xb0, 0x00, 0x00, 0xff};
     cmd[2] = addr;
     int wb = sizeof(cmd);
-    mUsbDev->WriteBytes(cmd, &wb);
+    mUsbDev->bulkWrite(cmd, wb);
     
     int rb = 64;
-    mUsbDev->ReadBytes(mReadBuf, &rb, 500);  // 500msでタイムアウト
+    mUsbDev->bulkRead(mReadBuf, rb);  // TODO: 500msでタイムアウト
     return mReadBuf[0];
 }
 
@@ -188,13 +191,36 @@ void SpcControlDevice::WriteBuffer()
         if (mWriteBytes < 64) {
             mWriteBuf[mWriteBytes++] = 0xff;
         }
-        mUsbDev->WriteBytes(mWriteBuf, &mWriteBytes);
+        mUsbDev->bulkWrite(mWriteBuf, mWriteBytes);
+        mWriteBytes = BLOCKWRITE_CMD_LEN;
+    }
+}
+
+void SpcControlDevice::WriteBufferAsync()
+{
+    if (mWriteBytes > BLOCKWRITE_CMD_LEN) {
+        mWriteBuf[0] = 0xfd;
+        mWriteBuf[1] = 0xb2;
+        mWriteBuf[2] = 0x00;
+        mWriteBuf[3] = 0x00;
+        for (int i=0; i<1; i++) {
+            if (mWriteBytes < 64) {
+                mWriteBuf[mWriteBytes] = 0xff;
+                mWriteBytes++;
+            }
+        }
+        // GIMIC側のパケットは64バイト固定なので満たない場合0xffを末尾に追加
+        if (mWriteBytes < 64) {
+            mWriteBuf[mWriteBytes++] = 0xff;
+        }
+        mUsbDev->bulkWriteAsync(mWriteBuf, mWriteBytes);
         mWriteBytes = BLOCKWRITE_CMD_LEN;
     }
 }
 
 int SpcControlDevice::CatchTransferError()
 {
+    /*
     if (mUsbDev->GetAvailableInBytes()) {
         unsigned char *msg = mUsbDev->GetReadBytesPtr();
         int err = *(reinterpret_cast<unsigned int*>(msg));
@@ -202,6 +228,7 @@ int SpcControlDevice::CatchTransferError()
             return err;
         }
     }
+     */
     return 0;
 }
 
@@ -209,7 +236,7 @@ int SpcControlDevice::CatchTransferError()
 
 int SpcControlDevice::WaitReady()
 {
-    if (mUsbDev->IsInitialized()) {
+    if (mUsbDev->isPlugged()) {
         ReadAndWait(0, 0xaa);
         ReadAndWait(1, 0xbb);
         WriteBuffer();

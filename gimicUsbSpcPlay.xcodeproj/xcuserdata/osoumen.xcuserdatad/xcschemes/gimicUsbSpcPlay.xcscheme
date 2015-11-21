@@ -60,7 +60,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "test.spc"
+            argument = "gtme.spc"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F52674191C0056C2006B0276 /* ControlUSB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52674171C0056C2006B0276 /* ControlUSB.cpp */; };
 		F52C3D0119FD0EF900FADE5C /* dsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CF419FD0EF900FADE5C /* dsp.cpp */; };
 		F52C3D0219FD0EF900FADE5C /* SNES_SPC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CF619FD0EF900FADE5C /* SNES_SPC.cpp */; };
 		F52C3D0319FD0EF900FADE5C /* SNES_SPC_misc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CF819FD0EF900FADE5C /* SNES_SPC_misc.cpp */; };
@@ -15,14 +16,12 @@
 		F52C3D0619FD0EF900FADE5C /* SPC_DSP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CFD19FD0EF900FADE5C /* SPC_DSP.cpp */; };
 		F52C3D0719FD0EF900FADE5C /* SPC_Filter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3CFF19FD0EF900FADE5C /* SPC_Filter.cpp */; };
 		F52C3D0819FD1DCA00FADE5C /* SpcControlDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */; };
-		F52C3D0919FD1DCD00FADE5C /* BulkUsbDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */; };
 		F52C3D0C19FD34CE00FADE5C /* DspRegFIFO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F52C3D0A19FD34CE00FADE5C /* DspRegFIFO.cpp */; };
 		F5585FA0194DA613002A9AF7 /* SPCFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F5585F9D194DA613002A9AF7 /* SPCFile.cpp */; };
 		F5585FA4194DA6B6002A9AF7 /* FileAccess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F5585FA2194DA6B6002A9AF7 /* FileAccess.cpp */; };
 		F57BAFBA194C69E800E9D728 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F57BAFB9194C69E800E9D728 /* main.cpp */; };
 		F57BAFC5194C6A6300E9D728 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC4194C6A6300E9D728 /* Foundation.framework */; };
 		F57BAFC7194C6A6900E9D728 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC6194C6A6900E9D728 /* IOKit.framework */; };
-		F57BAFC9194C6AA400E9D728 /* libusb-1.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F57BAFC8194C6AA400E9D728 /* libusb-1.0.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -38,6 +37,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F52674171C0056C2006B0276 /* ControlUSB.cpp */ = {isa = PBXFileReference; fileEncoding = 2147483649; lastKnownFileType = sourcecode.cpp.cpp; path = ControlUSB.cpp; sourceTree = "<group>"; };
+		F52674181C0056C2006B0276 /* ControlUSB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ControlUSB.h; sourceTree = "<group>"; };
 		F52C3CF019FD0EF900FADE5C /* blargg_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blargg_common.h; sourceTree = "<group>"; };
 		F52C3CF119FD0EF900FADE5C /* blargg_config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blargg_config.h; sourceTree = "<group>"; };
 		F52C3CF219FD0EF900FADE5C /* blargg_endian.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = blargg_endian.h; sourceTree = "<group>"; };
@@ -65,9 +66,6 @@
 		F57BAFB9194C69E800E9D728 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		F57BAFC4194C6A6300E9D728 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		F57BAFC6194C6A6900E9D728 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		F57BAFC8194C6AA400E9D728 /* libusb-1.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libusb-1.0.a"; path = "../../../../../usr/local/lib/libusb-1.0.a"; sourceTree = "<group>"; };
-		F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BulkUsbDevice.cpp; sourceTree = "<group>"; };
-		F57BAFD1194C6D4F00E9D728 /* BulkUsbDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BulkUsbDevice.h; sourceTree = "<group>"; };
 		F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SpcControlDevice.cpp; sourceTree = "<group>"; };
 		F57BAFD4194C759700E9D728 /* SpcControlDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpcControlDevice.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -77,7 +75,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F57BAFC9194C6AA400E9D728 /* libusb-1.0.a in Frameworks */,
 				F57BAFC7194C6A6900E9D728 /* IOKit.framework in Frameworks */,
 				F57BAFC5194C6A6300E9D728 /* Foundation.framework in Frameworks */,
 			);
@@ -124,7 +121,6 @@
 		F57BAFAD194C69E800E9D728 = {
 			isa = PBXGroup;
 			children = (
-				F57BAFC8194C6AA400E9D728 /* libusb-1.0.a */,
 				F57BAFC6194C6A6900E9D728 /* IOKit.framework */,
 				F57BAFC4194C6A6300E9D728 /* Foundation.framework */,
 				F52C3CEF19FD0EF900FADE5C /* snes_spc */,
@@ -148,8 +144,8 @@
 				F52C3D0A19FD34CE00FADE5C /* DspRegFIFO.cpp */,
 				F52C3D0B19FD34CE00FADE5C /* DspRegFIFO.h */,
 				F57BAFB9194C69E800E9D728 /* main.cpp */,
-				F57BAFD0194C6D4F00E9D728 /* BulkUsbDevice.cpp */,
-				F57BAFD1194C6D4F00E9D728 /* BulkUsbDevice.h */,
+				F52674171C0056C2006B0276 /* ControlUSB.cpp */,
+				F52674181C0056C2006B0276 /* ControlUSB.h */,
 				F57BAFD3194C759700E9D728 /* SpcControlDevice.cpp */,
 				F57BAFD4194C759700E9D728 /* SpcControlDevice.h */,
 			);
@@ -207,9 +203,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F52674191C0056C2006B0276 /* ControlUSB.cpp in Sources */,
 				F52C3D0419FD0EF900FADE5C /* SNES_SPC_state.cpp in Sources */,
 				F52C3D0519FD0EF900FADE5C /* spc.cpp in Sources */,
-				F52C3D0919FD1DCD00FADE5C /* BulkUsbDevice.cpp in Sources */,
 				F57BAFBA194C69E800E9D728 /* main.cpp in Sources */,
 				F52C3D0619FD0EF900FADE5C /* SPC_DSP.cpp in Sources */,
 				F5585FA0194DA613002A9AF7 /* SPCFile.cpp in Sources */,
