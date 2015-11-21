@@ -72,7 +72,17 @@ unsigned char SpcControlDevice::PortRead(int addr)
     mUsbDev->bulkWrite(cmd, wb);
     
     int rb = 64;
-    mUsbDev->bulkRead(mReadBuf, rb);  // TODO: 500msでタイムアウト
+    int retry = 500;
+    while (mUsbDev->getReadableBytes() < rb) {
+        usleep(1000);
+        retry--;
+        if (retry == 0) {
+            break;
+        }
+    }
+    if (retry > 0) {
+        mUsbDev->read(mReadBuf, rb);
+    }
     return mReadBuf[0];
 }
 
@@ -220,15 +230,14 @@ void SpcControlDevice::WriteBufferAsync()
 
 int SpcControlDevice::CatchTransferError()
 {
-    /*
-    if (mUsbDev->GetAvailableInBytes()) {
-        unsigned char *msg = mUsbDev->GetReadBytesPtr();
+    if (mUsbDev->getReadableBytes() >= 4) {
+        unsigned char msg[4];
+        mUsbDev->read(msg, 4);
         int err = *(reinterpret_cast<unsigned int*>(msg));
         if (err == 0xfefefefe) {
             return err;
         }
     }
-     */
     return 0;
 }
 

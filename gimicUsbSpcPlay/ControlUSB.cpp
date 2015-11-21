@@ -15,10 +15,6 @@
 #include <unistd.h>
 #include <mach/mach.h>
 
-#ifndef DEBUG_PRINT
-#define	printf	(void)
-#endif
-
 #ifdef DEBUG_PRINT
 static int sNumInstances = 0;	//デバッグ用
 #endif
@@ -34,6 +30,8 @@ ControlUSB::ControlUSB()
 , mUsbDevice(-1)
 , mWriteBufferPtr(0)
 {
+    mReadBufferReadPtr = 0;
+    mReadBufferWritePtr = 0;
 #ifdef DEBUG_PRINT
 	sNumInstances++;
 #endif
@@ -191,10 +189,8 @@ SInt32		ControlUSB::bulkWrite(UInt8 *buf, UInt32 size)
 	
 	kr = (*mIntf)->WritePipe(mIntf, mWPipe, &mWriteBuffer[mWriteBufferPtr], len);
 	if (kr != noErr) {
-		printf("Write error in bulkWrite.\n");
-#ifdef DEBUG_PRINT
+		//printf("Write error in bulkWrite.\n");
 		printErr(kr);
-#endif
 		return -1;
 	}
 	
@@ -217,10 +213,8 @@ SInt32		ControlUSB::bulkWriteAsync(UInt8 *buf, UInt32 size)
 	
 	kr = (*mIntf)->WritePipeAsync(mIntf, mWPipe, &mWriteBuffer[mWriteBufferPtr], len, NULL, NULL);
 	if (kr != noErr) {
-		printf("Write error in bulkWrite.\n");
-#ifdef DEBUG_PRINT
+		//printf("Write error in bulkWrite.\n");
 		printErr(kr);
-#endif
 		return -1;
 	}
 	
@@ -228,25 +222,45 @@ SInt32		ControlUSB::bulkWriteAsync(UInt8 *buf, UInt32 size)
 	return 0;
 }
 
-
-SInt32		ControlUSB::bulkRead(UInt8 *buf, UInt32 size)
+#if 0
+SInt32		ControlUSB::bulkRead(UInt8 *buf, UInt32 size, UInt32 timeout)
 {
 	if (!mIsPlugged) return -1;
 
 	IOReturn			kr = noErr;
 	UInt32				len = size;
 	
-	kr = (*mIntf)->ReadPipe(mIntf, mRPipe, buf, &len);
+	kr = (*mIntf)->ReadPipeTO(mIntf, mRPipe, buf, &len, timeout, timeout);
 	if (kr != noErr) {
-		printf("Read error in bulkRead.\n");
-#ifdef DEBUG_PRINT
+		//printf("Read error in bulkRead.\n");
 		printErr(kr);
-#endif
 		return 0;
 	}
 	return len;
 }
-								  
+#endif
+
+SInt32      ControlUSB::read(UInt8 *buf, UInt32 size)
+{
+    SInt32 bytes = getReadableBytes();
+    if (bytes == 0) {
+        return 0;
+    }
+    if (bytes > size) {
+        bytes = size;
+    }
+    for (int i=0; i<bytes; i++) {
+        buf[i] = mReadBuffer[mReadBufferReadPtr];
+        mReadBufferReadPtr = (mReadBufferReadPtr + 1) % READ_BUFFER_SIZE;
+    }
+    return bytes;
+}
+
+SInt32      ControlUSB::getReadableBytes()
+{
+    return ((mReadBufferWritePtr + READ_BUFFER_SIZE) - mReadBufferReadPtr) % READ_BUFFER_SIZE;
+}
+
 IOReturn	ControlUSB::controlWrite(IOUSBDeviceInterface300 **dev, UInt16 address, UInt16 length, UInt8 *data)
 {
 	if (!mIsPlugged) return -1;
@@ -271,7 +285,7 @@ IOReturn	ControlUSB::configureDevice(IOUSBDeviceInterface300 **dev)
     if(!numConf) {
         return -1;
 	}
-	printf("Device has %d configurations\n", numConf);
+	//printf("Device has %d configurations\n", numConf);
     
     // コンフィグレーション・ディスクリプタを取得する。
     kr = (*dev)->GetConfigurationDescriptorPtr(dev, 0, &confDesc);
@@ -323,7 +337,7 @@ IOReturn	ControlUSB::findInterfaces(IOUSBDeviceInterface300 **dev)
         kr = (*intf)->USBInterfaceOpen(intf);
         if(kIOReturnSuccess != kr) {
 			
-			printf("USBInterfaceOpen error.\n");
+			//printf("USBInterfaceOpen error.\n");
 			printErr(kr);
 			
             (void) (*intf)->Release(intf);
@@ -427,6 +441,7 @@ IOReturn	ControlUSB::findInterfaces(IOUSBDeviceInterface300 **dev)
 
 void		ControlUSB::printErr(IOReturn kr)
 {
+#ifdef DEBUG_PRINT
 	printf("result:%08x\n", kr);
 	
 	IOReturn	err;
@@ -438,6 +453,7 @@ void		ControlUSB::printErr(IOReturn kr)
 	
 	err = err_get_code( kr );
 	printf("err code:%04x\n", err);
+#endif
 }
 
 /*static*/ void ControlUSB::NewDeviceAdded(void *refCon, io_iterator_t iterator)
@@ -470,7 +486,7 @@ void		ControlUSB::printErr(IOReturn kr)
         res = (*plugInInterface)->QueryInterface(plugInInterface, CFUUIDGetUUIDBytes(kIOUSBDeviceInterfaceID300), (LPVOID*)&dev);
         (*plugInInterface)->Release(plugInInterface);
         if (res || !dev) {
-			printf("NewDeviceAdded : QueryInterface error.\n");
+			//printf("NewDeviceAdded : QueryInterface error.\n");
             continue;
         }
 		
@@ -478,20 +494,20 @@ void		ControlUSB::printErr(IOReturn kr)
         do {
             kr = (*dev)->USBDeviceOpen(dev);
             if(kIOReturnExclusiveAccess == kr) {
-				printf("NewDeviceAdded : USBDeviceOpen exclusiveErr.\n");
+				//printf("NewDeviceAdded : USBDeviceOpen exclusiveErr.\n");
                 exclusiveErr++;
                 usleep(1000);
             }
         } while((kIOReturnExclusiveAccess == kr) && (exclusiveErr < 5));	// 5回まで再試行する。
         if(kIOReturnSuccess != kr) {
-			printf("NewDeviceAdded : USBDeviceOpen error.\n");
+			//printf("NewDeviceAdded : USBDeviceOpen error.\n");
             (*dev)->Release(dev);
             continue;
         }
 		
         kr = cusb->configureDevice(dev);
         if (kIOReturnSuccess != kr) {
-			printf("NewDeviceAdded : configureDevice error.\n");
+			//printf("NewDeviceAdded : configureDevice error.\n");
             (*dev)->USBDeviceClose(dev);
             (*dev)->Release(dev);
             continue;
@@ -499,7 +515,7 @@ void		ControlUSB::printErr(IOReturn kr)
 		
         kr = cusb->findInterfaces(dev);
         if (kIOReturnSuccess != kr) {
-			printf("NewDeviceAdded : findInterfaces error.\n");
+			//printf("NewDeviceAdded : findInterfaces error.\n");
             (*dev)->USBDeviceClose(dev);
             (*dev)->Release(dev);
             continue;
@@ -509,6 +525,8 @@ void		ControlUSB::printErr(IOReturn kr)
 		cusb->mDev = dev;
 		cusb->mIsPlugged = true;
 		cusb->onDeviceAdded();
+        
+        pthread_create(&cusb->mReadThread, NULL, readThreadFunc, cusb);
     }
 }
 
@@ -520,7 +538,9 @@ void		ControlUSB::printErr(IOReturn kr)
     
     while((usbDevice = IOIteratorNext(iterator))) {
 		if (usbDevice == cusb->mUsbDevice) {
+            // TODO: Readスレッドを停止
 			cusb->mIsPlugged = false;
+            pthread_join(cusb->mReadThread, NULL);
 			cusb->onDeviceRemoved();
 			cusb->releaseAsyncRunLoopSource();
 		}
@@ -536,4 +556,25 @@ void		ControlUSB::printErr(IOReturn kr)
 {
 }
 
+/*static*/ void *ControlUSB::readThreadFunc(void *arg)
+{
+    ControlUSB  *This = static_cast<ControlUSB*>(arg);
+    while (This->mIsPlugged) {
+        IOReturn    kr = noErr;
+        UInt32      readByte = 1;
+        
+        if (This->getReadableBytes() == (READ_BUFFER_SIZE-1)) {
+            usleep(1000);
+            continue;
+        }
+        kr = (*This->mIntf)->ReadPipeTO(This->mIntf,
+                                        This->mRPipe,
+                                        &This->mReadBuffer[This->mReadBufferWritePtr],
+                                        &readByte, READ_TIMEOUT, READ_TIMEOUT);
+        if (kr == kIOReturnSuccess) {
+            This->mReadBufferWritePtr = (This->mReadBufferWritePtr + readByte) % READ_BUFFER_SIZE;
+        }
+    }
+    return 0;
+}
 #endif

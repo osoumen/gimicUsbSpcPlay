@@ -15,6 +15,7 @@
 #include <IOKit/IOCFPlugIn.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/usb/IOUSBLib.h>
+#include <pthread.h>
 
 class ControlUSB {
 public:
@@ -30,13 +31,17 @@ public:
 	IOReturn	resetwPipe();
 	SInt32		bulkWrite(UInt8 *buf, UInt32 size);
 	SInt32		bulkWriteAsync(UInt8 *buf, UInt32 size);
-	SInt32		bulkRead(UInt8 *buf, UInt32 size);
+	//SInt32		bulkRead(UInt8 *buf, UInt32 size, UInt32 timeout);
+    SInt32      read(UInt8 *buf, UInt32 size);
+    SInt32      getReadableBytes();
 	
 	static void NewDeviceAdded(void *refCon, io_iterator_t iterator);
 	static void NewDeviceRemoved(void *refCon, io_iterator_t iterator);
 
 private:
 	static const int			WRITE_BUFFER_SIZE = 4096;
+    static const int			READ_BUFFER_SIZE = 4096;
+    static const int            READ_TIMEOUT = 100;
 	
 	bool	mIsRun;
 	volatile bool	mIsPlugged;
@@ -54,6 +59,11 @@ private:
     
 	UInt8						mWriteBuffer[WRITE_BUFFER_SIZE];
 	int							mWriteBufferPtr;
+    UInt8						mReadBuffer[READ_BUFFER_SIZE];
+	int							mReadBufferReadPtr;
+    int							mReadBufferWritePtr;
+    
+    pthread_t                   mReadThread;
 	
 	IOReturn	configureDevice(IOUSBDeviceInterface300 **dev);
 	IOReturn	controlWrite(IOUSBDeviceInterface300 **dev, UInt16 address, UInt16 length, UInt8 *data);
@@ -64,6 +74,8 @@ private:
 	
 	virtual void		onDeviceAdded();
 	virtual void		onDeviceRemoved();
+    
+    static void *readThreadFunc(void *arg);
 };
 
 #else
