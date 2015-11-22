@@ -43,6 +43,7 @@ srcdir:
 	.db "SS"
 main:
 	mov a,#$00
+	mov $02,a
 	mov SPC_PORT3,#$77
 loop:
 	cmp a,SPC_PORT0		; 3
@@ -71,7 +72,10 @@ toram:
 	mov [SPC_PORT2]+y,a
 	mov a,x
 	mov SPC_PORT0,a
-	bra loop
+	mov x,$02
+	beq loop	; $0002に0以外が書き込まれたらIPLに飛ぶ
+	mov $f1,#$b0
+	jmp !$ffcf
 	.db "EE"
 
 .ends
