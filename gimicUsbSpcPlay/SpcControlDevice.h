@@ -9,7 +9,6 @@
 #ifndef __gimicUsbSpcPlay__SpcControlDevice__
 #define __gimicUsbSpcPlay__SpcControlDevice__
 
-//#include "BulkUsbDevice.h"
 #include "ControlUSB.h"
 
 class SpcControlDevice {
@@ -31,16 +30,10 @@ public:
     void WriteAndWait(int addr, unsigned char waitValue);
     void WriteBuffer();
     void WriteBufferAsync();
-    int UploadDSPReg(unsigned char *dspReg);
-    int UploadDSPReg2(unsigned char *dspReg);
-    int UploadZeroPageIPL(unsigned char *zeroPageRam);
+    
     int UploadRAMDataIPL(unsigned char *ram, int addr, int size, unsigned char initialP0state);
-    int UploadRAMDataFast(unsigned char *ram, int addr);
     int WaitReady();
-    int JumpToBootloader(int addr, unsigned char initialP0state,
-                          unsigned char p0, unsigned char p1,
-                          unsigned char p2, unsigned char p3);
-    int JumpToDspCode(int addr, unsigned char initialP0state);
+    int JumpToCode(int addr, unsigned char initialP0state);
     
     int CatchTransferError();
 
@@ -59,8 +52,6 @@ private:
     int             mWriteBytes;
     
     int mNumReads;  // Read待ちのパケット数
-    int uploadDSPRamLoadCode(int addr);    
-    int uploadDSPRamLoadCode2(int addr);
 };
 
 #endif /* defined(__gimicUsbSpcPlay__SpcControlDevice__) */

@@ -13,6 +13,7 @@ using namespace std;
 
 void sigcatch(int);
 int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *ram, int bootPtr);
+int uploadDSPReg(SpcControlDevice *device, unsigned char *dspReg);
 
 static SpcControlDevice    *device = NULL;
 static int port0state = 0x01;
@@ -201,6 +202,59 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+int uploadDSPReg(SpcControlDevice *device, unsigned char *dspReg)
+{
+    unsigned char dspram_write_code[16] =
+    {   //128バイトの DSPレジスタをロードするためのコード
+        /*
+         --
+         mov   $f2,a
+         -
+         cmp   a,$f4
+         bne   -
+         mov   $f3,$f5
+         mov   $f4,a
+         inc   a
+         bpl   --
+         bra   $b7 (->ffc7)
+         */
+        0xC4, 0xF2, 0x64, 0xF4, 0xD0, 0xFC, 0xFA, 0xF5, 0xF3, 0xC4, 0xF4, 0xBC, 0x10, 0xF2, 0x2F, 0xB7,
+    };
+    
+    int err = device->UploadRAMDataIPL(dspram_write_code, 0x0002, sizeof(dspram_write_code), 0xcc); // $0002 にコードを書き込む
+    if (err < 0) {
+        return err;
+    }
+    
+    // DSPロードプログラムのアドレスをP2,P3にセットして、P0に16+1を書き込む
+    device->BlockWrite(1, 0x00, 0x02, 0x00); // 0なのでP2,P3はジャンプ先アドレス
+    device->WriteAndWait(0, err+1); // 16バイト書き込んだので１つ飛ばして17
+    device->WriteBuffer();
+    unsigned char port0state = 0;
+    for (int i=0; i<128; i++) {
+        device->BlockWrite(1, dspReg[i]);
+        if (i < 127) {
+            device->WriteAndWait(0, port0state);
+        }
+        else {
+            device->BlockWrite(0, port0state);
+        }
+        port0state++;
+        if (i == 127) {
+            device->WriteBuffer();
+        }
+        err = device->CatchTransferError();
+        if (err) {
+            return err;
+        }
+    }
+    // 正常に128バイト書き込まれたなら、プログラムはここで $ffc7 へジャンプされ、
+    // P0に $AA が書き込まれる
+    device->ReadAndWait(0, 0xaa);
+    device->WriteBuffer();
+    return 0;
+}
+
 int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *ram, int bootPtr)
 {
     int err = 0;
@@ -217,7 +271,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     }
     
 #ifndef SMC_EMU
-#if 1
+#if 0
     // 0ページとDSPレジスタを転送
     err = device->UploadDSPReg2(dspReg);
     if (err < 0) {
@@ -232,7 +286,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
         return err;
     }
     
-    err = device->UploadZeroPageIPL(ram);
+    err = device->UploadRAMDataIPL(ram, 0x0002, 0xf0-2, 0xcc);
     if (err < 0) {
         return err;
     }
@@ -245,12 +299,12 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     }
 #else
     // 0ページとDSPレジスタを転送
-    err = device->UploadDSPReg(dspReg);
+    err = uploadDSPReg(device, dspReg);
     if (err < 0) {
         return err;
     }
     
-    err = device->UploadZeroPageIPL(ram);
+    err = device->UploadRAMDataIPL(ram, 0x0002, 0xf0-2, 0xcc);
     if (err < 0) {
         return err;
     }
@@ -269,17 +323,21 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     
     // ブートローダーへジャンプ
 #ifdef SMC_EMU
-    err = device->JumpToDspCode(bootPtr, err+1);
+    err = device->JumpToCode(bootPtr, err+1);
     if (err < 0) {
         return err;
     }
+    device->ReadAndWait(3, 0x77);
+    device->WriteBuffer();
 #else
-    err = device->JumpToBootloader(bootPtr, err+1,
-                                   ram[0xf4], ram[0xf5],
-                                   ram[0xf6], ram[0xf7]);
+    err = device->JumpToCode(bootPtr, err+1);
     if (err < 0) {
         return err;
     }
+    device->ReadAndWait(0, 'S');
+    // P0-P3を復元
+    device->BlockWrite(0, ram[0xf4], ram[0xf5], ram[0xf6], ram[0xf7]);
+    device->WriteBuffer();
 #endif
 
     return 0;
