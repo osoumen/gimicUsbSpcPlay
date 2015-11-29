@@ -40,10 +40,20 @@ srcdir:
 .bank 1 slot 1
 .section "CODE"
 
-	.db "SS"
 main:
-	mov a,#$00
-	mov $02,a
+	mov SPC_REGADDR,#DSP_FLG
+	mov SPC_REGDATA,#$a0
+	mov y,#0
+	mov a,#0
+	mov $04,#$00
+	mov $05,#$87
+initloop:
+	mov [$04]+y,a	; 7
+	incw $04		; 6
+	cmp $05,#$ff	; 5
+	bne initloop	; 4
+	mov a,SPC_PORT0
+ack:
 	mov SPC_PORT3,#$77
 loop:
 	cmp a,SPC_PORT0		; 3
@@ -55,9 +65,9 @@ loop:
 	mov SPC_REGDATA,SPC_PORT1
 	mov SPC_PORT0,a		; 4
 	; wait 64 - 32 cycle
-	cmp x,#$4c	; 3
+	cmp x,#DSP_KON	; 3
 	beq wait	; 4
-	cmp x,#$5c	; 3
+	cmp x,#DSP_KOF	; 3
 	bne loop	; 4
 wait:
 	mov y,#5	; 2
@@ -67,16 +77,38 @@ wait:
 	bra loop	; 4
 toram:
 	mov x,a
+	and a,#$40
+	bne blockTrans
 	mov y,#0
 	mov a,SPC_PORT1
 	mov [SPC_PORT2]+y,a
 	mov a,x
 	mov SPC_PORT0,a
-	mov x,$02
-	beq loop	; $0002に0以外が書き込まれたらIPLに飛ぶ
-	mov $f1,#$b0
-	jmp !$ffcf
-	.db "EE"
+	bra loop
+blockTrans:
+	mov $04,SPC_PORT2
+	mov $05,SPC_PORT3
+	mov a,x
+	mov y,#0
+	mov SPC_PORT0,a
+loop2:
+	cmp a,SPC_PORT0
+	beq loop2
+	mov a,SPC_PORT0
+	bmi ack
+	mov x,a
+	mov a,SPC_PORT1
+	mov [$04]+y,a
+	incw $04
+	mov a,SPC_PORT2
+	mov [$04]+y,a
+	incw $04
+	mov a,SPC_PORT3
+	mov [$04]+y,a
+	incw $04
+	mov a,x
+	mov SPC_PORT0,a
+	bra loop2
 
 .ends
 
