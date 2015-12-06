@@ -87,6 +87,7 @@ toram:
 	mov SPC_PORT0,a
 	bra loop
 blockTrans:
+	mov SPC_PORT3,#$0
 	mov $04,SPC_PORT2
 	mov $05,SPC_PORT3
 	mov a,x
