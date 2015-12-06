@@ -41,16 +41,17 @@ srcdir:
 .section "CODE"
 
 main:
+	mov SPC_CONTROL,#$00
 	mov SPC_REGADDR,#DSP_FLG
-	mov SPC_REGDATA,#$a0
+	mov SPC_REGDATA,#$00
 	mov y,#0
 	mov a,#0
 	mov $04,#$00
-	mov $05,#$87
+	mov $05,#$06
 initloop:
 	mov [$04]+y,a	; 7
 	incw $04		; 6
-	cmp $05,#$ff	; 5
+	cmp $05,#$7e	; 5
 	bne initloop	; 4
 	mov a,SPC_PORT0
 ack:
