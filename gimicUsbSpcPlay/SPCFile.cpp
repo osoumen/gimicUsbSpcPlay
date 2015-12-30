@@ -64,7 +64,7 @@ unsigned char dspregAccCode[] =
 {
     0xE8 ,0x00              //     	mov a,#$00
     ,0xC4 ,0x02             //     	mov $02,a
-    ,0x8F ,0x77 ,0xF7       //      mov SPC_PORT3,#$77
+    ,0x8F ,0xee ,0xF7       //      mov SPC_PORT3,#$ee
                             // loop:
     ,0x64 ,0xF4             //     	cmp a,SPC_PORT0		; 3
     ,0xF0 ,0xFC             //     	beq loop			; 2

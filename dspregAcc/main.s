@@ -55,7 +55,7 @@ initloop:
 	bne initloop	; 4
 	mov a,SPC_PORT0
 ack:
-	mov SPC_PORT3,#$77
+	mov SPC_PORT3,#$ee
 loop:
 	cmp a,SPC_PORT0		; 3
 	beq loop			; 2

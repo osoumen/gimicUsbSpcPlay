@@ -31,11 +31,14 @@ public:
     void WriteBuffer();
     void WriteBufferAsync();
     
-    int UploadRAMDataIPL(unsigned char *ram, int addr, int size, unsigned char initialP0state);
+    int UploadRAMDataIPL(const unsigned char *ram, int addr, int size, unsigned char initialP0state);
     int WaitReady();
     int JumpToCode(int addr, unsigned char initialP0state);
     
     int CatchTransferError();
+    
+    void setDeviceAddedFunc( void (*func) (void* ownerClass), void* ownerClass );
+	void setDeviceRemovedFunc( void (*func) (void* ownerClass) , void* ownerClass );
 
 private:
     static const int GIMIC_USBVID = 0x16c0;
@@ -51,7 +54,7 @@ private:
     unsigned char   mReadBuf[64];
     int             mWriteBytes;
     
-    int mNumReads;  // Read待ちのパケット数
+    //int mNumReads;  // Read待ちのパケット数
 };
 
 #endif /* defined(__gimicUsbSpcPlay__SpcControlDevice__) */

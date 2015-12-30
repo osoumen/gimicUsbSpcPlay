@@ -6,9 +6,20 @@
 //  Copyright (c) 2014年 osoumen. All rights reserved.
 //
 
-#include <iostream>
 #include "unistd.h"
 #include "SpcControlDevice.h"
+#include <iomanip>
+#include <iostream>
+
+void printBytes(const unsigned char *data, int bytes)
+{
+    /*
+    for (int i=0; i<bytes; i++) {
+        std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]) << " ";
+    }
+    std::cout << std::endl;
+     */
+}
 
 SpcControlDevice::SpcControlDevice()
 {
@@ -22,7 +33,9 @@ SpcControlDevice::~SpcControlDevice()
 
 int SpcControlDevice::Init()
 {
+    mWriteBytes = BLOCKWRITE_CMD_LEN;    // 0xFD,0xB2,0xNN分
     mUsbDev->BeginPortWait(GIMIC_USBVID, GIMIC_USBPID, 1, 2);
+#ifdef USB_CONSOLE_TEST
     int retryRemain = 100;
     while (!mUsbDev->isPlugged() && retryRemain > 0) {
         usleep(10000);
@@ -31,7 +44,7 @@ int SpcControlDevice::Init()
     if (!mUsbDev->isPlugged()) {
         return 1;
     }
-    mWriteBytes = BLOCKWRITE_CMD_LEN;    // 0xFD,0xB2,0xNN分
+#endif
     return 0;
 }
 
@@ -43,9 +56,14 @@ int SpcControlDevice::Close()
 
 void SpcControlDevice::HwReset()
 {
+    mUsbDev->resetrPipe();
+    mUsbDev->resetwPipe();
+    
     unsigned char cmd[] = {0xfd, 0x81, 0xff};
     int wb = sizeof(cmd);
     mUsbDev->bulkWrite(cmd, wb);
+    
+    printBytes(cmd, wb);
 }
 
 void SpcControlDevice::SwReset()
@@ -53,6 +71,8 @@ void SpcControlDevice::SwReset()
     unsigned char cmd[] = {0xfd, 0x82, 0xff};
     int wb = sizeof(cmd);
     mUsbDev->bulkWrite(cmd, wb);
+    
+    printBytes(cmd, wb);
 }
 
 void SpcControlDevice::PortWrite(int addr, unsigned char data)
@@ -62,6 +82,8 @@ void SpcControlDevice::PortWrite(int addr, unsigned char data)
     cmd[1] = data;
     int wb = sizeof(cmd);
     mUsbDev->bulkWrite(cmd, wb);
+    
+    printBytes(cmd, wb);
 }
 
 unsigned char SpcControlDevice::PortRead(int addr)
@@ -70,8 +92,10 @@ unsigned char SpcControlDevice::PortRead(int addr)
     cmd[2] = addr;
     int wb = sizeof(cmd);
     mUsbDev->bulkWrite(cmd, wb);
+    printBytes(cmd, wb);
     
     int rb = 64;
+#if 0
     int retry = 500;
     while (mUsbDev->getReadableBytes() < rb) {
         usleep(1000);
@@ -83,6 +107,11 @@ unsigned char SpcControlDevice::PortRead(int addr)
     if (retry > 0) {
         mUsbDev->read(mReadBuf, rb);
     }
+#else
+    mUsbDev->bulkRead(mReadBuf, rb, 500);
+    //std::cout << ">";
+    printBytes(mReadBuf, 1);
+#endif
     return mReadBuf[0];
 }
 
@@ -170,6 +199,9 @@ void SpcControlDevice::WriteAndWait(int addr, unsigned char waitValue)
 
 void SpcControlDevice::WriteBuffer()
 {
+    if (!mUsbDev->isPlugged()) {
+        return;
+    }
     /*
     if (mWriteBytes > 62) {
         // TODO: Assert
@@ -201,6 +233,9 @@ void SpcControlDevice::WriteBuffer()
         if (mWriteBytes < 64) {
             mWriteBuf[mWriteBytes++] = 0xff;
         }
+        //if (mWriteBuf[6] == 0x7d && mWriteBuf[7] == 0xc0) {
+            printBytes(mWriteBuf, mWriteBytes);
+        //}
         mUsbDev->bulkWrite(mWriteBuf, mWriteBytes);
         mWriteBytes = BLOCKWRITE_CMD_LEN;
     }
@@ -208,6 +243,9 @@ void SpcControlDevice::WriteBuffer()
 
 void SpcControlDevice::WriteBufferAsync()
 {
+    if (!mUsbDev->isPlugged()) {
+        return;
+    }
     if (mWriteBytes > BLOCKWRITE_CMD_LEN) {
         mWriteBuf[0] = 0xfd;
         mWriteBuf[1] = 0xb2;
@@ -223,6 +261,9 @@ void SpcControlDevice::WriteBufferAsync()
         if (mWriteBytes < 64) {
             mWriteBuf[mWriteBytes++] = 0xff;
         }
+        //if (mWriteBuf[6] == 0x7d && mWriteBuf[7] == 0xc0) {
+            printBytes(mWriteBuf, mWriteBytes);
+        //}
         mUsbDev->bulkWriteAsync(mWriteBuf, mWriteBytes);
         mWriteBytes = BLOCKWRITE_CMD_LEN;
     }
@@ -239,6 +280,16 @@ int SpcControlDevice::CatchTransferError()
         }
     }
     return 0;
+}
+
+void SpcControlDevice::setDeviceAddedFunc( void (*func) (void* ownerClass), void* ownerClass )
+{
+    mUsbDev->setDeviceAddedFunc(func, ownerClass);
+}
+
+void SpcControlDevice::setDeviceRemovedFunc( void (*func) (void* ownerClass) , void* ownerClass )
+{
+    mUsbDev->setDeviceRemovedFunc(func, ownerClass);
 }
 
 //-----------------------------------------------------------------------------
@@ -258,7 +309,7 @@ int SpcControlDevice::WaitReady()
     return 0;
 }
 
-int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size, unsigned char initialP0state)
+int SpcControlDevice::UploadRAMDataIPL(const unsigned char *ram, int addr, int size, unsigned char initialP0state)
 {
     BlockWrite(1, 0x01, addr & 0xff, (addr >> 8) & 0xff); // 非0なのでP2,P3は書き込み開始アドレス
     unsigned char port0State = initialP0state;
@@ -270,7 +321,7 @@ int SpcControlDevice::UploadRAMDataIPL(unsigned char *ram, int addr, int size, u
         WriteAndWait(0, port0State);
         port0State++;
         if ((i % 256) == 255) {
-            std::cout << ".";
+            //std::cout << ".";
         }
         if (i == (size-1)) {
             WriteBuffer();
@@ -287,7 +338,7 @@ int SpcControlDevice::JumpToCode(int addr, unsigned char initialP0state)
 {
     BlockWrite(2, addr & 0xff, (addr >> 8) & 0xff);
     BlockWrite(1, 0);    // 0なのでP2,P3はジャンプ先アドレス
-    unsigned char port0state = initialP0state;
+    unsigned char port0state = initialP0state & 0xff;
     BlockWrite(0, port0state);
     WriteBuffer();
     

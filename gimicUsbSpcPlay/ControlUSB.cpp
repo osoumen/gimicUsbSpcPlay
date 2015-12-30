@@ -32,6 +32,8 @@ ControlUSB::ControlUSB()
 {
     mReadBufferReadPtr = 0;
     mReadBufferWritePtr = 0;
+    mDeviceAddedFunc = NULL;
+    mDeviceRemovedFunc = NULL;
 #ifdef DEBUG_PRINT
 	sNumInstances++;
 #endif
@@ -222,7 +224,7 @@ SInt32		ControlUSB::bulkWriteAsync(UInt8 *buf, UInt32 size)
 	return 0;
 }
 
-#if 0
+#if 1
 SInt32		ControlUSB::bulkRead(UInt8 *buf, UInt32 size, UInt32 timeout)
 {
 	if (!mIsPlugged) return -1;
@@ -353,7 +355,9 @@ IOReturn	ControlUSB::findInterfaces(IOUSBDeviceInterface300 **dev)
             (void) (*intf)->Release(intf);
             break;
         }
+#ifdef DEBUG_PRINT
 		printf("Interface has %d endpoints\n", interfaceNumEndpoints);
+#endif
 		
 		int		pipeRef;
 		for (pipeRef = 1; pipeRef <= interfaceNumEndpoints; pipeRef++)
@@ -524,7 +528,9 @@ void		ControlUSB::printErr(IOReturn kr)
 		cusb->mUsbDevice = usbDevice;
 		cusb->mDev = dev;
 		cusb->mIsPlugged = true;
-		cusb->onDeviceAdded();
+        if (cusb->mDeviceAddedFunc) {
+            cusb->mDeviceAddedFunc(cusb->mDeviceAddedFuncClass);
+        }
         
         pthread_create(&cusb->mReadThread, NULL, readThreadFunc, cusb);
     }
@@ -538,28 +544,35 @@ void		ControlUSB::printErr(IOReturn kr)
     
     while((usbDevice = IOIteratorNext(iterator))) {
 		if (usbDevice == cusb->mUsbDevice) {
-            // TODO: Readスレッドを停止
+            // Readスレッドを停止
 			cusb->mIsPlugged = false;
             pthread_join(cusb->mReadThread, NULL);
-			cusb->onDeviceRemoved();
+            if (cusb->mDeviceRemovedFunc) {
+                cusb->mDeviceRemovedFunc(cusb->mDeviceRemovedFuncClass);
+            }
 			cusb->releaseAsyncRunLoopSource();
 		}
 		kr = IOObjectRelease(usbDevice);
     }
 }
 
-/*virtual*/ void ControlUSB::onDeviceAdded()
+void ControlUSB::setDeviceAddedFunc( void (*func) (void* ownerClass), void* ownerClass )
 {
+    mDeviceAddedFunc = func;
+    mDeviceAddedFuncClass = ownerClass;
 }
 
-/*virtual*/ void ControlUSB::onDeviceRemoved()
+void ControlUSB::setDeviceRemovedFunc( void (*func) (void* ownerClass) , void* ownerClass )
 {
+    mDeviceRemovedFunc = func;
+    mDeviceRemovedFuncClass = ownerClass;
 }
 
 /*static*/ void *ControlUSB::readThreadFunc(void *arg)
 {
     ControlUSB  *This = static_cast<ControlUSB*>(arg);
     while (This->mIsPlugged) {
+#if 0
         IOReturn    kr = noErr;
         UInt32      readByte = 1;
         
@@ -574,6 +587,9 @@ void		ControlUSB::printErr(IOReturn kr)
         if (kr == kIOReturnSuccess) {
             This->mReadBufferWritePtr = (This->mReadBufferWritePtr + readByte) % READ_BUFFER_SIZE;
         }
+#else
+        usleep(1000);
+#endif
     }
     return 0;
 }

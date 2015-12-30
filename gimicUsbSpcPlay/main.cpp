@@ -327,7 +327,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     if (err < 0) {
         return err;
     }
-    device->ReadAndWait(3, 0x77);
+    device->ReadAndWait(3, 0xee);
     device->WriteBuffer();
 #else
     err = device->JumpToCode(bootPtr, err+1);
