@@ -8,7 +8,7 @@
 #include "DspRegFIFO.h"
 
 #ifdef _MSC_VER
-#include <Windows.h>
+#include <thread>
 #include <chrono>
 #define USE_CHRONO_TIME 1
 #else
@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
     do {
         trErr = transferSpc(device, spc->GetDspReg(), spc->GetRamData(), spc->GetBootPtr());
         if (trErr == 0) break;
-#ifdef _MSC_VER
-		::Sleep(100);
+#ifdef USE_CHRONO_TIME
+		this_thread::sleep_for(std::chrono::microseconds(100000));
 #else
         usleep(100000);
 #endif
@@ -192,8 +192,8 @@ int main(int argc, char *argv[])
 			if (elapsedTime >= cycle_us) {
 				break;
 			}
-#ifdef _MSC_VER
-			::Sleep(1);
+#ifdef USE_CHRONO_TIME
+			this_thread::sleep_for(std::chrono::microseconds(100));
 #else
 			usleep(100);
 #endif

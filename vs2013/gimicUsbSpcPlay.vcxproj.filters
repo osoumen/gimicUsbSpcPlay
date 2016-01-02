@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="ソース ファイル\snes_spc">
+      <UniqueIdentifier>{beb369e5-f9a8-40e1-9bac-77ab7e1bfd4e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\snes_spc">
+      <UniqueIdentifier>{9bc18eb3-f042-4279-b7ae-85884eaa6de2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\gimicUsbSpcPlay\ControlUSB.cpp">
@@ -34,25 +40,25 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="..\snes_spc\dsp.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\snes_spc</Filter>
     </ClCompile>
     <ClCompile Include="..\snes_spc\SNES_SPC.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\snes_spc</Filter>
     </ClCompile>
     <ClCompile Include="..\snes_spc\SNES_SPC_misc.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\snes_spc</Filter>
     </ClCompile>
     <ClCompile Include="..\snes_spc\SNES_SPC_state.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\snes_spc\spc.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="..\snes_spc\SPC_DSP.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\snes_spc</Filter>
     </ClCompile>
     <ClCompile Include="..\snes_spc\SPC_Filter.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\snes_spc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\snes_spc\SPC_DSP.cpp">
+      <Filter>ソース ファイル\snes_spc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\snes_spc\spc.cpp">
+      <Filter>ソース ファイル\snes_spc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -71,35 +77,35 @@
     <ClInclude Include="..\gimicUsbSpcPlay\SPCFile.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="..\snes_spc\blargg_source.h">
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
+    </ClInclude>
     <ClInclude Include="..\snes_spc\blargg_common.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
     </ClInclude>
     <ClInclude Include="..\snes_spc\blargg_config.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
     </ClInclude>
     <ClInclude Include="..\snes_spc\blargg_endian.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\snes_spc\blargg_source.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
     </ClInclude>
     <ClInclude Include="..\snes_spc\dsp.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\snes_spc\SNES_SPC.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\snes_spc\spc.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\snes_spc\SPC_CPU.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="..\snes_spc\SPC_DSP.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
     </ClInclude>
     <ClInclude Include="..\snes_spc\SPC_Filter.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\snes_spc\SPC_DSP.h">
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\snes_spc\SPC_CPU.h">
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\snes_spc\spc.h">
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\snes_spc\SNES_SPC.h">
+      <Filter>ヘッダー ファイル\snes_spc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
