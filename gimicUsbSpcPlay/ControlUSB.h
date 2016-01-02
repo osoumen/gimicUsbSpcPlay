@@ -86,22 +86,33 @@ private:
 #else
 class ControlUSB {
 public:
-	ControlUSB() {}
-	virtual ~ControlUSB() {}
+	ControlUSB();
+	virtual ~ControlUSB();
 	
-	void	BeginPortWait(int vendor, int product) {}
-	void	EndPortWait() {}
+	void	BeginPortWait(int vendor, int product, int wpipe, int rpipe);
+	void	EndPortWait();
 
-	bool		isPlugged() { return false; }
-	void		removeDevice() {}
-	bool		resetrPipe() {}
-	bool		resetwPipe() {}
-	int			bulkWrite(unsigned char *buf, unsigned int size) { return -1; }
-	int			bulkWriteAsync(unsigned char *buf, unsigned int size) { return -1; }
-	int			bulkRead(unsigned char *buf, unsigned int size) { return -1; }
+	bool		isPlugged() { return mIsPlugged; }
+	void		removeDevice();
+	bool		resetrPipe();
+	bool		resetwPipe();
+	int			bulkWrite(unsigned char *buf, unsigned int size);
+	int			bulkWriteAsync(unsigned char *buf, unsigned int size);
+	int			bulkRead(unsigned char *buf, unsigned int size, unsigned int timeout);
+	int		    read(unsigned char *buf, unsigned int size);
+	int		    getReadableBytes();
+
+	void		setDeviceAddedFunc(void(*func) (void* ownerClass), void* ownerClass);
+	void		setDeviceRemovedFunc(void(*func) (void* ownerClass), void* ownerClass);
 
 private:
-	virtual void		onDeviceAdded() {}
-	virtual void		onDeviceRemoved() {}
+	bool	mIsRun;
+	volatile bool	mIsPlugged;
+
+	void(*mDeviceAddedFunc) (void* ownerClass);
+	void                        *mDeviceAddedFuncClass;
+	void(*mDeviceRemovedFunc) (void* ownerClass);
+	void                        *mDeviceRemovedFuncClass;
+
 };
 #endif

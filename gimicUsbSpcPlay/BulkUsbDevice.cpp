@@ -6,10 +6,12 @@
 //  Copyright (c) 2014年 osoumen. All rights reserved.
 //
 
+#include "BulkUsbDevice.h"
+
+
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
-#include "BulkUsbDevice.h"
 
 using namespace std;
 

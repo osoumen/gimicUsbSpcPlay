@@ -593,4 +593,62 @@ void ControlUSB::setDeviceRemovedFunc( void (*func) (void* ownerClass) , void* o
     }
     return 0;
 }
+#else
+ControlUSB::ControlUSB()
+{
+}
+ControlUSB::~ControlUSB()
+{
+}
+
+void ControlUSB::BeginPortWait(int vendor, int product, int wpipe, int rpipe)
+{
+}
+void ControlUSB::EndPortWait()
+{
+}
+
+void ControlUSB::removeDevice()
+{
+}
+bool ControlUSB::resetrPipe()
+{
+	return false;
+}
+bool ControlUSB::resetwPipe()
+{
+	return false;
+}
+int	 ControlUSB::bulkWrite(unsigned char *buf, unsigned int size)
+{
+	return 0;
+}
+int	 ControlUSB::bulkWriteAsync(unsigned char *buf, unsigned int size)
+{
+	return 0;
+}
+int	 ControlUSB::bulkRead(unsigned char *buf, unsigned int size, unsigned int timeout)
+{
+	return 0;
+}
+int	 ControlUSB::read(unsigned char *buf, unsigned int size)
+{
+	return 0;
+}
+int	 ControlUSB::getReadableBytes()
+{
+	return 0;
+}
+
+void ControlUSB::setDeviceAddedFunc(void(*func) (void* ownerClass), void* ownerClass)
+{
+	mDeviceAddedFunc = func;
+	mDeviceAddedFuncClass = ownerClass;
+}
+
+void ControlUSB::setDeviceRemovedFunc(void(*func) (void* ownerClass), void* ownerClass)
+{
+	mDeviceRemovedFunc = func;
+	mDeviceRemovedFuncClass = ownerClass;
+}
 #endif

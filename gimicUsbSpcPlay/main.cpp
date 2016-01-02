@@ -1,13 +1,20 @@
-#include <iostream>
+﻿#include <iostream>
 #include <iomanip>
-#include <unistd.h>
-#include <sys/time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "SpcControlDevice.h"
 #include "SPCFile.h"
 #include "SNES_SPC.h"
 #include "DspRegFIFO.h"
+
+#ifdef _MSC_VER
+#include <Windows.h>
+#include <chrono>
+#define USE_CHRONO_TIME 1
+#else
+#include <unistd.h>
+#include <sys/time.h>
+#endif
 
 using namespace std;
 
@@ -69,11 +76,17 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
+#ifndef _MSC_VER
     signal(SIGTERM, sigcatch);
-    
+#endif
+
     // 時間計測
+#ifdef USE_CHRONO_TIME
+	auto startTime = chrono::system_clock::now();
+#else
     timeval startTime;
     gettimeofday(&startTime, NULL );
+#endif
     
     // 失敗したら一定回数までリトライする
     int retry = 5;
@@ -81,7 +94,11 @@ int main(int argc, char *argv[])
     do {
         trErr = transferSpc(device, spc->GetDspReg(), spc->GetRamData(), spc->GetBootPtr());
         if (trErr == 0) break;
+#ifdef _MSC_VER
+		::Sleep(100);
+#else
         usleep(100000);
+#endif
         retry--;
     } while (retry > 0);
     if (trErr) {
@@ -93,11 +110,19 @@ int main(int argc, char *argv[])
 
     cout << "finished." << endl;
     
+#ifdef USE_CHRONO_TIME
+	auto endTime = chrono::system_clock::now();
+	auto diff = endTime - startTime;
+	std::cout << "転送時間: "
+		<< chrono::duration_cast<std::chrono::microseconds>(diff).count() * 1.0e-6
+		<< "秒"	<< endl;
+#else
     timeval endTime;
     gettimeofday(&endTime, NULL );
-    cout << "転送時間: "
-    << (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_usec - startTime.tv_usec) * 1.0e-6
-    << "秒" << endl;
+	cout << "転送時間: "
+		<< (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_usec - startTime.tv_usec) * 1.0e-6
+		<< "秒" << endl;
+#endif
     
     // エミュレーションでSPCを再生
 #ifdef SMC_EMU
@@ -145,25 +170,43 @@ int main(int argc, char *argv[])
         device->WriteBuffer();
     }
 
+#ifdef USE_CHRONO_TIME
+	auto prevTime = std::chrono::system_clock::now();
+	auto nowTime = std::chrono::system_clock::now();
+#else
     timeval prevTime;
     timeval nowTime;
     gettimeofday(&prevTime, NULL);
+#endif
     static const int cycle_us = 1000;
     for (;;) {
         //1ms待つ
         for (;;) {
-            gettimeofday(&nowTime, NULL);
-            int elapsedTime = (nowTime.tv_sec - prevTime.tv_sec) * 1e6 + (nowTime.tv_usec - prevTime.tv_usec);
-            if (elapsedTime >= cycle_us) {
-                break;
-            }
-            usleep(100);
+#ifdef USE_CHRONO_TIME
+			nowTime = std::chrono::system_clock::now();
+			auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(nowTime - prevTime).count();
+#else
+			gettimeofday(&nowTime, NULL);
+			int elapsedTime = static_cast<int>((nowTime.tv_sec - prevTime.tv_sec) * 1e6 + (nowTime.tv_usec - prevTime.tv_usec));
+#endif
+			if (elapsedTime >= cycle_us) {
+				break;
+			}
+#ifdef _MSC_VER
+			::Sleep(1);
+#else
+			usleep(100);
+#endif
         }
+#ifdef USE_CHRONO_TIME
+		prevTime += std::chrono::microseconds(cycle_us);
+#else
         prevTime.tv_usec += cycle_us;
         if (prevTime.tv_usec >= 1000000) {
             prevTime.tv_usec -= 1000000;
             prevTime.tv_sec++;
         }
+#endif
 
         err = spcPlay.play((cycle_us / 125) * 8, NULL);   //1ms動作させる
         if (err) {
@@ -181,7 +224,7 @@ int main(int argc, char *argv[])
                 }
                 else {
                     // DSPレジスタ
-                    device->BlockWrite(1, write.data, write.addr);
+                    device->BlockWrite(1, write.data, static_cast<unsigned char>(write.addr));
                     device->WriteAndWait(0, port0state);
                 }
                 port0state = port0state ^ 0x01;

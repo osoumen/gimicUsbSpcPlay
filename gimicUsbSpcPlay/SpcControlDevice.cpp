@@ -1,4 +1,4 @@
-//
+﻿//
 //  SpcControlDevice.cpp
 //  gimicUsbSpcPlay
 //
@@ -6,10 +6,14 @@
 //  Copyright (c) 2014年 osoumen. All rights reserved.
 //
 
-#include "unistd.h"
 #include "SpcControlDevice.h"
 #include <iomanip>
 #include <iostream>
+#ifdef _MSC_VER
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
 
 void printBytes(const unsigned char *data, int bytes)
 {
@@ -38,7 +42,11 @@ int SpcControlDevice::Init()
 #ifdef USB_CONSOLE_TEST
     int retryRemain = 100;
     while (!mUsbDev->isPlugged() && retryRemain > 0) {
+#ifdef _MSC_VER
+		::Sleep(10);
+#else
         usleep(10000);
+#endif
         retryRemain--;
     }
     if (!mUsbDev->isPlugged()) {
