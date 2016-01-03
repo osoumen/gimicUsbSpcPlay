@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include "SpcControlDevice.h"
 #include "SPCFile.h"
 #include "SNES_SPC.h"
@@ -76,9 +77,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
-#ifndef _MSC_VER
     signal(SIGTERM, sigcatch);
-#endif
+	signal(SIGINT, sigcatch);
+	signal(SIGABRT, sigcatch);
 
     // 時間計測
 #ifdef USE_CHRONO_TIME
@@ -229,7 +230,7 @@ int main(int argc, char *argv[])
                 }
                 port0state = port0state ^ 0x01;
             }
-            device->WriteBufferAsync();
+            device->WriteBuffer();
             int err = device->CatchTransferError();
             if (err) {
                 
