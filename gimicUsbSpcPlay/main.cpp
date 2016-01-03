@@ -9,36 +9,39 @@
 #include "DspRegFIFO.h"
 
 #ifdef _MSC_VER
+
 #include <thread>
 #include <chrono>
+
 typedef long long MSTime;
 typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> OSTime;
-inline MSTime calcusTime(OSTime end, OSTime st) {
+inline MSTime calcusTime(const &OSTime end, const &OSTime st) {
 	return std::chrono::duration_cast<std::chrono::microseconds>(end - st).count();
 }
-inline OSTime &getNowOSTime() {
-	return std::chrono::system_clock::now();
+inline getNowOSTime(OSTime &time) {
+	time = std::chrono::system_clock::now();
 }
-void operator += (OSTime &time, MSTime addus) {
+inline void operator += (OSTime &time, MSTime addus) {
 	time += std::chrono::microseconds(addus);
 }
 inline void WaitMicroSeconds(MSTime usec) {
 	std::this_thread::sleep_for(std::chrono::microseconds(usec));
 }
+
 #else
+
 #include <unistd.h>
 #include <sys/time.h>
-typedef long long MSTime;
+
+typedef useconds_t MSTime;
 typedef timeval OSTime;
-inline MSTime calcusTime(OSTime end, OSTime st) {
+inline MSTime calcusTime(const OSTime &end, const OSTime &st) {
 	return ((end.tv_sec - st.tv_sec) * 1e6 + (end.tv_usec - st.tv_usec));
 }
-inline OSTime &getNowOSTime() {
-	timeval temp;
-	gettimeofday(&temp, NULL);
-	return temp;
+inline void getNowOSTime(OSTime &time) {
+	gettimeofday(&time, NULL);
 }
-void operator += (OSTime &time, MSTime addus) {
+inline void operator += (OSTime &time, MSTime addus) {
 	time.tv_usec += addus;
 	if (time.tv_usec >= 1000000) {
 		time.tv_usec -= 1000000;
@@ -48,6 +51,7 @@ void operator += (OSTime &time, MSTime addus) {
 inline void WaitMicroSeconds(MSTime usec) {
 	usleep(usec);
 }
+
 #endif
 
 using namespace std;
@@ -115,7 +119,8 @@ int main(int argc, char *argv[])
 	signal(SIGABRT, sigcatch);
 
     // 時間計測
-	OSTime startTime = getNowOSTime();
+	OSTime startTime;
+    getNowOSTime(startTime);
     
     // 失敗したら一定回数までリトライする
     int retry = 5;
@@ -135,11 +140,10 @@ int main(int argc, char *argv[])
 
     cout << "finished." << endl;
     
-	OSTime endTime = getNowOSTime();
+	OSTime endTime;
+    getNowOSTime(endTime);
 	MSTime diff = calcusTime(endTime, startTime);
-	std::cout << "転送時間: "
-		<< diff * 1.0e-6
-		<< "秒"	<< endl;
+	std::cout << "転送時間: " << diff * 1.0e-6 << "秒" << endl;
     
     // エミュレーションでSPCを再生
 #ifdef SMC_EMU
@@ -187,13 +191,14 @@ int main(int argc, char *argv[])
         device->WriteBuffer();
     }
 
-	OSTime prevTime = getNowOSTime();
+	OSTime prevTime;
+    getNowOSTime(prevTime);
 	OSTime nowTime;
 	static const MSTime cycle_us = 1000;
     for (;;) {
         //1ms待つ
         for (;;) {
-			nowTime = getNowOSTime();
+			getNowOSTime(nowTime);
 			MSTime elapsedTime = calcusTime(nowTime, prevTime);
 			if (elapsedTime >= cycle_us) {
 				break;
