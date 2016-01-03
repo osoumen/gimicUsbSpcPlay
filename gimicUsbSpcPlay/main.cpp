@@ -15,10 +15,10 @@
 
 typedef long long MSTime;
 typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> OSTime;
-inline MSTime calcusTime(const &OSTime end, const &OSTime st) {
+inline MSTime calcusTime(const OSTime &end, const OSTime &st) {
 	return std::chrono::duration_cast<std::chrono::microseconds>(end - st).count();
 }
-inline getNowOSTime(OSTime &time) {
+inline void getNowOSTime(OSTime &time) {
 	time = std::chrono::system_clock::now();
 }
 inline void operator += (OSTime &time, MSTime addus) {
