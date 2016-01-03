@@ -11,10 +11,43 @@
 #ifdef _MSC_VER
 #include <thread>
 #include <chrono>
-#define USE_CHRONO_TIME 1
+typedef long long MSTime;
+typedef std::chrono::time_point<std::chrono::system_clock, std::chrono::system_clock::duration> OSTime;
+inline MSTime calcusTime(OSTime end, OSTime st) {
+	return std::chrono::duration_cast<std::chrono::microseconds>(end - st).count();
+}
+inline OSTime &getNowOSTime() {
+	return std::chrono::system_clock::now();
+}
+void operator += (OSTime &time, MSTime addus) {
+	time += std::chrono::microseconds(addus);
+}
+inline void WaitMicroSeconds(MSTime usec) {
+	std::this_thread::sleep_for(std::chrono::microseconds(usec));
+}
 #else
 #include <unistd.h>
 #include <sys/time.h>
+typedef long long MSTime;
+typedef timeval OSTime;
+inline MSTime calcusTime(OSTime end, OSTime st) {
+	return ((end.tv_sec - st.tv_sec) * 1e6 + (end.tv_usec - st.tv_usec));
+}
+inline OSTime &getNowOSTime() {
+	timeval temp;
+	gettimeofday(&temp, NULL);
+	return temp;
+}
+void operator += (OSTime &time, MSTime addus) {
+	time.tv_usec += addus;
+	if (time.tv_usec >= 1000000) {
+		time.tv_usec -= 1000000;
+		time.tv_sec++;
+	}
+}
+inline void WaitMicroSeconds(MSTime usec) {
+	usleep(usec);
+}
 #endif
 
 using namespace std;
@@ -82,12 +115,7 @@ int main(int argc, char *argv[])
 	signal(SIGABRT, sigcatch);
 
     // 時間計測
-#ifdef USE_CHRONO_TIME
-	auto startTime = chrono::system_clock::now();
-#else
-    timeval startTime;
-    gettimeofday(&startTime, NULL );
-#endif
+	OSTime startTime = getNowOSTime();
     
     // 失敗したら一定回数までリトライする
     int retry = 5;
@@ -95,12 +123,8 @@ int main(int argc, char *argv[])
     do {
         trErr = transferSpc(device, spc->GetDspReg(), spc->GetRamData(), spc->GetBootPtr());
         if (trErr == 0) break;
-#ifdef USE_CHRONO_TIME
-		this_thread::sleep_for(std::chrono::microseconds(100000));
-#else
-        usleep(100000);
-#endif
-        retry--;
+		WaitMicroSeconds(100000);
+		retry--;
     } while (retry > 0);
     if (trErr) {
         cout << "transfer error." << endl;
@@ -111,19 +135,11 @@ int main(int argc, char *argv[])
 
     cout << "finished." << endl;
     
-#ifdef USE_CHRONO_TIME
-	auto endTime = chrono::system_clock::now();
-	auto diff = endTime - startTime;
+	OSTime endTime = getNowOSTime();
+	MSTime diff = calcusTime(endTime, startTime);
 	std::cout << "転送時間: "
-		<< chrono::duration_cast<std::chrono::microseconds>(diff).count() * 1.0e-6
+		<< diff * 1.0e-6
 		<< "秒"	<< endl;
-#else
-    timeval endTime;
-    gettimeofday(&endTime, NULL );
-	cout << "転送時間: "
-		<< (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_usec - startTime.tv_usec) * 1.0e-6
-		<< "秒" << endl;
-#endif
     
     // エミュレーションでSPCを再生
 #ifdef SMC_EMU
@@ -171,43 +187,20 @@ int main(int argc, char *argv[])
         device->WriteBuffer();
     }
 
-#ifdef USE_CHRONO_TIME
-	auto prevTime = std::chrono::system_clock::now();
-	auto nowTime = std::chrono::system_clock::now();
-#else
-    timeval prevTime;
-    timeval nowTime;
-    gettimeofday(&prevTime, NULL);
-#endif
-    static const int cycle_us = 1000;
+	OSTime prevTime = getNowOSTime();
+	OSTime nowTime;
+	static const MSTime cycle_us = 1000;
     for (;;) {
         //1ms待つ
         for (;;) {
-#ifdef USE_CHRONO_TIME
-			nowTime = std::chrono::system_clock::now();
-			auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(nowTime - prevTime).count();
-#else
-			gettimeofday(&nowTime, NULL);
-			int elapsedTime = static_cast<int>((nowTime.tv_sec - prevTime.tv_sec) * 1e6 + (nowTime.tv_usec - prevTime.tv_usec));
-#endif
+			nowTime = getNowOSTime();
+			MSTime elapsedTime = calcusTime(nowTime, prevTime);
 			if (elapsedTime >= cycle_us) {
 				break;
 			}
-#ifdef USE_CHRONO_TIME
-			this_thread::sleep_for(std::chrono::microseconds(100));
-#else
-			usleep(100);
-#endif
+			WaitMicroSeconds(100);
         }
-#ifdef USE_CHRONO_TIME
-		prevTime += std::chrono::microseconds(cycle_us);
-#else
-        prevTime.tv_usec += cycle_us;
-        if (prevTime.tv_usec >= 1000000) {
-            prevTime.tv_usec -= 1000000;
-            prevTime.tv_sec++;
-        }
-#endif
+		prevTime += cycle_us;
 
         err = spcPlay.play((cycle_us / 125) * 8, NULL);   //1ms動作させる
         if (err) {
