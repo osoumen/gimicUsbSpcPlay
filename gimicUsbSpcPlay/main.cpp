@@ -114,6 +114,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
     
+    device->SetClock(49152000);
+    //device->SetClock(61440000);
+    
     signal(SIGTERM, sigcatch);
 	signal(SIGINT, sigcatch);
 	signal(SIGABRT, sigcatch);
@@ -362,6 +365,8 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
     if (err < 0) {
         return err;
     }
+    
+    device->SetClock(24576000);
     
     // ブートローダーへジャンプ
 #ifdef SMC_EMU

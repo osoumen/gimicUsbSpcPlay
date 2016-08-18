@@ -146,6 +146,17 @@ void SpcControlDevice::BlockWrite(int addr, unsigned char data)
     mWriteBytes++;
 }
 
+void SpcControlDevice::SetClock(int clk)
+{
+    unsigned char cmd[] = {0xfd, 0x83, 0x00, 0x00, 0x00, 0x00, 0xff};
+    cmd[2] = clk & 0xff;
+    cmd[3] = (clk >> 8) & 0xff;
+    cmd[4] = (clk >> 16) & 0xff;
+    cmd[5] = (clk >> 24) & 0xff;
+    int wb = sizeof(cmd);
+    mUsbDev->bulkWrite(cmd, wb);
+}
+
 void SpcControlDevice::BlockWrite(int addr, unsigned char data, unsigned char data2)
 {
     // 残り3バイト未満なら書き込んでから追加する

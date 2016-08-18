@@ -22,6 +22,7 @@ public:
     void SwReset();
     void PortWrite(int addr, unsigned char data);
     unsigned char PortRead(int addr);
+    void SetClock(int clk);
     void BlockWrite(int addr, unsigned char data);
     void BlockWrite(int addr, unsigned char data, unsigned char data2);
     void BlockWrite(int addr, unsigned char data, unsigned char data2, unsigned char data3);
