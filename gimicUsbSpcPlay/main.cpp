@@ -63,7 +63,7 @@ int uploadDSPReg(SpcControlDevice *device, unsigned char *dspReg);
 static SpcControlDevice    *device = NULL;
 static int port0state = 0x01;
 
-#define SMC_EMU
+//#define SMC_EMU
 
 int main(int argc, char *argv[])
 {
@@ -349,7 +349,7 @@ int transferSpc(SpcControlDevice *device, unsigned char *dspReg, unsigned char *
         return err;
     }
     
-    err = device->UploadRAMDataIPL(ram, 0x0002, 0xf0-2, 0xcc);
+    err = device->UploadRAMDataIPL(ram+2, 0x0002, 0xf0-2, 0xcc);
     if (err < 0) {
         return err;
     }
