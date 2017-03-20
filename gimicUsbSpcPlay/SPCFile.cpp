@@ -164,7 +164,7 @@ bool SPCFile::Load()
     
 	//ファイルチェック
 //	if ( strncmp((char*)m_pFileData, "SNES-SPC700 Sound File Data v0.30", 33) != 0 ) {
-	if ( strncmp((char*)m_pFileData, "SNES-SPC700 Sound File Data v", 29) != 0 ) {
+	if ( strncmp((char*)m_pFileData, "SNES-SPC700 Sound File Data", 27) != 0 ) {
 		return false;
 	}
 	
@@ -249,9 +249,9 @@ void SPCFile::Fill0EchoRegion()
 {
     //エコー領域を0で埋める
     int echo_clear = 1;
-    // ECEN=0 なら必ずクリアする
-    if ((m_pDspReg[0x6c] & 0x20) == 0) {
-        echo_clear = 1;
+    // ECEN=1 ならクリアしない
+    if ((m_pDspReg[0x6c] & 0x20) != 0) {
+        echo_clear = 0;
     }
     if (echo_clear) {
         for (int i=mEchoRegion; (i<0x10000)&&(i<mEchoRegion+mEchoSize); i++) {
@@ -335,7 +335,7 @@ void SPCFile::FindAndLocateBootCode()
         else {
             //見つからなければエコー領域を使う
             printf("Not found space area. Use echo area\n");
-            addr = mEchoRegion;
+            addr = mEchoRegion + mEchoSize - codeSize;
         }
     }
     for (int i=addr; i<(addr+codeSize); i++) {

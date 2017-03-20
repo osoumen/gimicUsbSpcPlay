@@ -61,6 +61,10 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "gtme.spc"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "&quot;/Users/osoumen/Downloads/Skype/SPC_NG/321x_Super Bomberman 4 (J) 07.spc&quot;"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
